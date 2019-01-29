@@ -1,0 +1,12 @@
+data/
+fashion_data/
+svhn_data/
+results/
+results_old/
+.DS_Store
+.python-version
+Pipfile
+Pipfile.lock
+
+__pycache__/
+*.pyc

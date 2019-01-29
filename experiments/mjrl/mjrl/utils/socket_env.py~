@@ -1,0 +1,86 @@
+
+import pickle
+import sys
+import time
+import zmq
+
+import numpy as np
+import gym
+
+class SocketEnv(gym.Env):
+    def __init__(self, env_name, port=33333):
+        super(SocketEnv, self).__init__()
+
+        self.env_name = env_name
+        self.port = port
+        self.env_uuid = None
+
+        self.context = zmq.Context()
+        print ("Connecting to server...")
+        self.socket = self.context.socket(zmq.REQ)
+        print ("Created socket")
+        self.socket.connect("tcp://c101943:%s" % port) #localhost:%s" % port)
+        print ("Connected!")
+        self._send_init()
+        print ("Sent init")
+
+    def _send_init(self):
+        print ("Send Init1")
+        md = dict(type='init', env_name=self.env_name)
+        print ("Send Init2")
+        self.socket.send_json(md)
+        print ("Send Init3")
+        self.env_uuid = self.socket.recv_string()
+        print ("Send Init4")
+
+    def _send_action(self, action, flags=0, copy=True, track=False):
+        md = dict(type='action', uuid=self.env_uuid)
+        self.socket.send_json(md, flags|zmq.SNDMORE)
+        action_serialized = pickle.dumps(action)
+        return self.socket.send(action_serialized, flags, copy=copy, track=track)
+
+    def _send_reset(self, flags=0, copy=True, track=False):
+        md = dict(type='reset', uuid=self.env_uuid)
+        return self.socket.send_json(md, flags)
+
+    def _send_close(self, flags=0, copy=True, track=False):
+        md = dict(type='close', uuid=self.env_uuid)
+        return self.socket.send_json(md, flags)
+
+    def step(self, action):
+        assert self.env_uuid is not None, "Must initialize connection first"
+        self._send_action(action)
+        action_resp_serialized = self.socket.recv()
+        action_resp = pickle.loads(action_resp_serialized)
+        observation, reward, done, info = action_resp
+        return observation, reward, done, info
+
+    def reset(self):
+        self._send_reset()
+        obs_resp_serialized = self.socket.recv()
+        obs = pickle.loads(obs_resp_serialized)
+        print ("reset resp:", obs)
+        return obs
+
+    def close(self):
+        self._send_close()
+
+if __name__ == "__main__":
+    env_name = sys.argv[1]
+    env = SocketEnv(env_name)
+    obs = env.reset()
+    done = False
+    env_tmp = gym.make(env_name)
+
+    for i in range(10):
+        while not done:
+            # import time
+            # time.sleep(0.5)
+            act = env_tmp.action_space.sample()
+            obs, rew, done, info = env.step(act)
+            print (rew)
+        env.reset()
+        done = False
+        print ("resetting env ", env_name)
+
+    env.close()
