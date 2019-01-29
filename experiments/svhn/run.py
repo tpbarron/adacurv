@@ -3,7 +3,6 @@ import arguments
 from itertools import product, chain
 import ray
 import svhn
-# from tqdm import tqdm
 
 ray.init()
 
@@ -13,7 +12,6 @@ algos1 = ['ngd', 'natural_adagrad']
 algos2 = ['natural_adam', 'natural_amsgrad']
 shrunk_ks = [10]
 batch_sizes = [125, 250, 500, 1000]
-# approx_adaptive = [False] #True, False]
 betas = [(0.1, 0.1)]
 lrs = [0.001]
 decay = True
@@ -32,14 +30,6 @@ variants2e = product(seeds, algos2, [False], shrunk_ks, [500], [0.001], approx_a
 variants2f = product(seeds, algos2, [False], shrunk_ks, [1000], [0.001], approx_adaptive, betas)
 variants2 = list(chain(variants2a, variants2b, variants2c, variants2d, variants2e, variants2f))
 
-# approx_adaptive = [False]
-# ngd versions with shrinkage (only optimal)
-# variants3a = product(seeds, algos1, [True], shrunk_ks, batch_sizes, lrs, approx_adaptive, betas)
-# variants3b = product(seeds, algos2, [True], shrunk_ks, [125], [0.0001], approx_adaptive, betas)
-# variants3c = product(seeds, algos2, [True], shrunk_ks, [250], [0.0005], approx_adaptive, betas)
-# variants3d = product(seeds, algos2, [True], shrunk_ks, [500], [0.001], approx_adaptive, betas)
-# variants3 = list(chain(variants3a, variants3b, variants3c, variants3d))
-
 all_variants = copy.deepcopy(list(chain(variants1, variants2)))
 print (all_variants)
 print (len(all_variants))
@@ -47,9 +37,9 @@ input("Continue?")
 
 @ray.remote
 def run(args):
+    print ("Starting job with args: ", args)
     svhn.launch_job(args)
-    # global pbar
-    # pbar.update(1)
+    print ("Finished job with args: ", args)
 
 gets = []
 

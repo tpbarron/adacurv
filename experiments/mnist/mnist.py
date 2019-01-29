@@ -70,8 +70,7 @@ def train(args, model, device, train_loader, test_loader, optimizer, epoch, data
         step_time = etime - stime
         times.append(step_time)
         # times.append(times[-1]+step_time)
-
-        print ("Step time: ", step_time, np.mean(np.array(times)))
+        # print ("Step time: ", step_time, np.mean(np.array(times)))
 
         if batch_idx % args.log_interval == 0:
             log_stats(accuracies, losses, times, args, model, device, test_loader, epoch, batch_idx)

@@ -6,5 +6,6 @@ seaborn
 sklearn
 scikit-learn
 scipy
+tabulate
 torch
 torchvision

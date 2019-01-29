@@ -9,9 +9,8 @@ This repository contains two main components.
     * `mnist` and `svhn`: code used for the supervised training experiments.
     * `mjrl`: code adapted from an existing MuJoCo RL library, [MJRL](https://github.com/aravindr93/mjrl), to accommodate [PyBullet](https://pybullet.org/wordpress/) and our new optimizers.
 
-    These experiments all contain a `run.py` file which was used to launch our experiments.
+    These experiments all contain a `run.py` file which was used to launch our experiments. See below for a quick-start script.
 
----
 
 ## Installation:
 
@@ -22,21 +21,17 @@ This repository contains two main components.
 #### Dependencies
 
 The majority of the dependencies can be installed using the requirements file.
-  The code has been run using `python3.[5,6]` and has not been tested with `python2`.
-
----
+The code has been run using `python3.[5,6]` and has not been tested with `python2`.
 
 ## Running the example scripts:
 
 For a faster start we include a `quick_start.py` file in each of the `mnist` and `mjrl` experiment directories that runs a single sample experiment.
 
----
-
 ## In-progress updates:
 
 There is a branch named `experimental` that has some in-progress extensions. These changes include:
-  * A parallel, randomized line search. The existing code uses a randomized search by default but does so sequentially. This improves computation time by ~X%.
-  * An approximate, parallel CG optimization. Using the fact that random vectors are approximately orthogonal in high dimensions (and that at each step we care only for an *approximate* solution) we are able to parallelize the Fisher-vector products required by CG resulting in approximately ~Y% speedup.
-  * Amortization of the cost of shrinkage over multiple time steps. The shrinkage estimator adds overhead to each update step while computing eigenvalues. We find computing this factor once every 10 or 20 updates is sufficient.
+  * **A parallel, randomized line search**. The existing code uses a randomized search by default but does so sequentially. This improves computation time by ~W%.
+  * **An approximate, parallel CG optimization**. Using the fact that random vectors are approximately orthogonal in high dimensions (and that at each step we care only for an *approximate* solution) we are able to parallelize the Fisher-vector products required by CG resulting in approximately ~X% speedup.
+  * **Amortization of the cost of shrinkage over multiple time steps**. The shrinkage estimator adds overhead to each update step while computing eigenvalues. We find computing this factor once every 10 or 20 updates is sufficient. ~Y%.
 
 Combined, these three improvements result in a Z% improvement in runtime.

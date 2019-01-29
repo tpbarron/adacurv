@@ -12,7 +12,6 @@ algos1 = ['ngd', 'natural_adagrad']
 algos2 = ['natural_adam', 'natural_amsgrad']
 shrunk_ks = [10]
 batch_sizes = [125, 250, 500, 1000]
-# approx_adaptive = [False] #True, False]
 betas = [(0.1, 0.1)]
 lrs = [0.001]
 decay = True
