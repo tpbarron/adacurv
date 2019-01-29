@@ -1,0 +1,10 @@
+gym
+numpy
+pybullet
+ray
+seaborn
+sklearn
+scikit-learn
+scipy
+torch
+torchvision

@@ -112,7 +112,7 @@ def fix_data_seed0(fpath, epoch_ids, epoch_ids_slim):
     # input("")
     np.save(fpath, orig_data[np_idxs])
 
-def plot(tag='mlp', bs=250, subtag='batch', lr='0.001', file='data', seeds=[0, 1, 2]):
+def subsample(tag='mlp', bs=250, subtag='batch', lr='0.001', file='data', seeds=[0, 1, 2]):
     try:
         os.makedirs("results/"+str(tag)+"/plots/" + subtag)
     except:
@@ -164,4 +164,4 @@ batch_sizes = [125, 250, 500, 1000]
 tag='mlp_mnist_seeds_decaysqrt'
 
 for b in batch_sizes:
-    plot(tag=tag, bs=b, subtag='test', seeds=[0])
+    subsample(tag=tag, bs=b, subtag='test', seeds=[0])
