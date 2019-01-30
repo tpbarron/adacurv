@@ -145,27 +145,6 @@ def launch_job(args):
     torch.manual_seed(args.seed)
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    # import numpy as np
-    # x_train = torch.from_numpy(np.load("./data/x_train_1.0.npy")).float()
-    # y_train = torch.from_numpy(np.load("./data/y_train.npy")).long()
-    #
-    # mu = torch.mean(x_train)
-    # std = torch.std(x_train)
-    # x_train.sub_(mu).div_(std)
-    #
-    # train_dset = torch.utils.data.dataset.TensorDataset(x_train, y_train)
-    # kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-    # train_loader = torch.utils.data.DataLoader(train_dset,
-    #     batch_size=args.batch_size, shuffle=True, **kwargs)
-    #
-    # x_test = torch.from_numpy(np.load("./data/x_test_1.0.npy")).float()
-    # x_test.sub_(mu).div_(std)
-    # y_test = torch.from_numpy(np.load("./data/y_test.npy")).long()
-    # test_dset = torch.utils.data.dataset.TensorDataset(x_test, y_test)
-    # test_loader = torch.utils.data.DataLoader(test_dset,
-    #     batch_size=args.test_batch_size, shuffle=True, **kwargs)
-
-
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     train_loader = torch.utils.data.DataLoader(
         datasets.MNIST('./data', train=True, download=True,

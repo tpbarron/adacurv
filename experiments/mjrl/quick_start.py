@@ -3,17 +3,23 @@ import time
 import ray_train
 
 tag = 'pybullet/quick_start'
-variant = [0,                       # seed
-          'HopperBulletEnv-v0',     # environment
-          'trpo',                   # algorithm (in this case, computes step size)
-          'natural_adam',           # optimizer (computes step direction)
-          True,                     # whether to use shrinkage
-          5,                        # num eigs to compute
-          5000,                     # batch size
-          0.0,                      # TRPO ignores this and uses KL dist 0.01
-          False,                    # use optimal adaptive update
-          (0.1, 0.1),               # betas for gradient and Fisher
-          True,                     # use neural net policy
-          1000000]                  # total samples
+seeds = [0, 1, 2]
+variant_trpo_natural_adam = [0,                       # seed
+                            'HopperBulletEnv-v0',     # environment
+                            'trpo',                   # algorithm (in this case, computes step size)
+                            'natural_adam',           # optimizer (computes step direction)
+                            True,                     # whether to use shrinkage
+                            5,                        # num eigs to compute
+                            5000,                     # batch size
+                            0.0,                      # TRPO ignores this and uses KL dist 0.01
+                            False,                    # use optimal adaptive update
+                            (0.1, 0.1),               # betas for gradient and Fisher
+                            True,                     # use neural net policy
+                            1000000]                  # total samples
+variant_trpo = [0, 'HopperBulletEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
+variants = [variant_trpo_natural_adam, variant_trpo]
 
-ray_train.launch_job(tag, variant)
+for s in seeds:
+    for v in variants:
+        v[0] = s # assign seed
+        ray_train.launch_job(tag, v)
