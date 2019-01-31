@@ -2,6 +2,8 @@ import os
 import time
 import ray_train
 
+# NOTE: there is high variance and still some stochastisticity in these runs so one seed is not
+# necessarily representative of relative performance. All plots in the paper use 5 seeds.
 tag = 'quick_start'
 seeds = [0]
 variant_trpo_natural_adam = [0,                       # seed

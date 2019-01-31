@@ -26,6 +26,7 @@ The code has been run using `python3.[5,6]` and has not been tested with `python
 ## Running the example scripts:
 
 For a faster start we include a `quick_start.py` file in each of the `mnist` and `mjrl` experiment directories that runs a single sample experiment.
+Once this has finished the data can be plotted with the `plot_quick_start.py` script.
 
 <!-- ## In-progress updates:
 
