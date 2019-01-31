@@ -18,9 +18,9 @@ from fisher.optim.hvp_utils import build_Fvp, mean_kl_multinomial
 
 def log_stats(batch_idxs, args, model, device, test_loader, epoch, batch_idx):
     batch_idxs.append(epoch)
-    print (batch_idxs)
+    # print (batch_idxs)
     dir = build_log_dir(args)
-    np.save(dir+"/epoch_ids_batch_slim"+str(args.batch_size)+".npy", np.array(batch_idxs))
+    np.save(dir+"/epoch"+str(args.epochs)+"_ids_batch"+str(args.batch_size)+".npy", np.array(batch_idxs))
 
 def train(args, model, device, train_loader, test_loader, optimizer, epoch, datas):
     batch_idxs = datas
@@ -79,6 +79,13 @@ def launch_job(args):
         train(args, None, device, train_loader, test_loader, None, epoch, batch_idxs)
 
     log_stats(batch_idxs, args, None, device, test_loader, epoch, 'inf')
+
+def generate_batch_ids(epochs=10, batch_size=500):
+    import arguments
+    args = arguments.get_args()
+    args.epochs = epochs
+    args.batch_size = batch_size
+    launch_job(args)
 
 def main():
     import arguments

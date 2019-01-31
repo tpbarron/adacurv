@@ -2,8 +2,8 @@ import os
 import time
 import ray_train
 
-tag = 'pybullet/quick_start'
-seeds = [0, 1, 2]
+tag = 'quick_start'
+seeds = [0]
 variant_trpo_natural_adam = [0,                       # seed
                             'HopperBulletEnv-v0',     # environment
                             'trpo',                   # algorithm (in this case, computes step size)
@@ -12,12 +12,12 @@ variant_trpo_natural_adam = [0,                       # seed
                             5,                        # num eigs to compute
                             5000,                     # batch size
                             0.0,                      # TRPO ignores this and uses KL dist 0.01
-                            False,                    # use optimal adaptive update
+                            False,                    # whether to use approx adaptive update
                             (0.1, 0.1),               # betas for gradient and Fisher
                             True,                     # use neural net policy
                             1000000]                  # total samples
 variant_trpo = [0, 'HopperBulletEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
-variants = [variant_trpo_natural_adam, variant_trpo]
+variants = [variant_trpo_natural_adam]#, variant_trpo]
 
 for s in seeds:
     for v in variants:

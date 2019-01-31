@@ -210,10 +210,10 @@ def plot(tag='mlp',
 
 f, axes = plt.subplots(1, 3)
 tag = 'pybullet_sample_mode_trpo'
-subtag = 'final'
-plot(tag='pybullet_sample_mode_trpo', env='HopperBulletEnv-v0', subtag='final', compile='mean', fig_ax=(f, axes[0]))
-plot(tag='pybullet_sample_mode_trpo', env='HalfCheetahBulletEnv-v0', subtag='final', compile='mean', fig_ax=(f, axes[1]))
-plot(tag='pybullet_sample_mode_trpo', env='Walker2DBulletEnv-v0', subtag='final', compile='mean', fig_ax=(f, axes[2]))
+subtag = 'rerun'
+plot(tag='pybullet_sample_mode_trpo', env='HopperBulletEnv-v0', subtag=subtag, compile='mean', fig_ax=(f, axes[0]))
+plot(tag='pybullet_sample_mode_trpo', env='HalfCheetahBulletEnv-v0', subtag=subtag, compile='mean', fig_ax=(f, axes[1]))
+plot(tag='pybullet_sample_mode_trpo', env='Walker2DBulletEnv-v0', subtag=subtag, compile='mean', fig_ax=(f, axes[2]))
 
 
 f.set_figwidth(5)

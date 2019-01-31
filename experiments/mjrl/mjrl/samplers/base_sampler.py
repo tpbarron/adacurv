@@ -63,7 +63,7 @@ def do_rollout(N,
 
         while t < T and done != True:
             a, agent_info = policy.get_action(o)
-            a = np.clip(a, env.env.action_space.low, env.env.action_space.high)
+            # a = np.clip(a, env.env.action_space.low, env.env.action_space.high)
             next_o, r, done, env_info = env.step(a)
             # print (o, a, r)
             #observations.append(o.ravel())

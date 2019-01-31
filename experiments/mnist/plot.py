@@ -83,7 +83,7 @@ def load_from_path(fpath, seeds=[0], compile='median'):
     stdev = np.std(ngd_cg_cat, axis=0)
     return (ngd_cg_mean, stdev), (max_mean, max_std)
 
-def plot(tag='mlp', bs=250, subtag='batch', lr='0.001', file='data', fig_ax=None, seeds=[0, 1, 2]):
+def plot(tag='mlp', epochs=10, bs=250, subtag='batch', lr='0.001', file='data', fig_ax=None, seeds=[0, 1, 2]):
     try:
         os.makedirs("results/"+str(tag)+"/plots/" + subtag)
     except:
@@ -92,7 +92,12 @@ def plot(tag='mlp', bs=250, subtag='batch', lr='0.001', file='data', fig_ax=None
     if fig_ax is not None:
         fig, ax = fig_ax
 
-    epoch_ids = np.load("results/meta/epoch_ids_batch_slim"+str(bs)+".npy")
+    epoch_ids_path = "results/meta/epoch"+str(epochs)+"_ids_batch"+str(bs)+".npy"
+    if not os.path.isfile(epoch_ids_path):
+        print ("Generating batch ids")
+        gen_batch_ids.generate_batch_ids(epochs, batch_size)
+
+    epoch_ids = np.load(epoch_ids_path)
     xs = gen_xs(epoch_ids)
 
     print ("Batch size: ", bs)
@@ -262,6 +267,7 @@ def plot(tag='mlp', bs=250, subtag='batch', lr='0.001', file='data', fig_ax=None
     sns.despine()
 
 
+epochs = 10
 batch_sizes = [1000] #125, 250, 500, 1000]
 f, axes = plt.subplots(1, 4, sharey=True)
 tag='full' #mlp_mnist_seeds_decaysqrt'
@@ -297,7 +303,7 @@ for b, ax in zip(batch_sizes, axes):
 
     # plot(tag='mlp_mnist_baseline_epochs10_lr0.001', bs=b, subtag='batch')
 
-    plot(tag=tag, bs=b, subtag='test', seeds=[0], fig_ax=(f, ax))
+    plot(tag=tag, epochs=10, bs=b, subtag='test', seeds=[0], fig_ax=(f, ax))
 
 f.set_figwidth(8)
 f.set_figheight(1.5)

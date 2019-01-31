@@ -16,7 +16,7 @@ shrunk_ks = [5] #167
 batch_sizes = [5000]
 approx_adaptive = [False]
 betas = [(0.1, 0.1)]
-lrs = [0.005] # NOTE: if have more than 1 lr, make sure TRPO only runs once!
+lrs = [0.01] # NOTE: if have more than 1 lr, make sure TRPO only runs once!
 use_nn_policy = [True]
 total_samples = 1000000
 
