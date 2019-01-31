@@ -112,7 +112,6 @@ def plot(tag='mlp', epochs=10, bs=250, subtag='batch', lr='0.001', file='data', 
 
 epochs = 5
 batch_size = 500
-f, axes = plt.subplots(1, 4, sharey=True)
 tag='mlp_mnist/quick_start/'
-subtag='pre_run'
+subtag='adam_ngd_fang_comparison'
 plot(tag=tag, epochs=epochs, bs=batch_size, subtag=subtag, seeds=[0])

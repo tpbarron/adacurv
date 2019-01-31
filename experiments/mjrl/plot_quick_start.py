@@ -103,5 +103,5 @@ def plot(tag='mlp',
 
 # tag = 'pybullet_sample_mode_trpo'
 tag = 'quick_start/'
-subtag = 'pre_run'
+subtag = 'hopper_exp'
 plot(tag=tag, env='HopperBulletEnv-v0', subtag=subtag, compile='mean', lr='0.005')
