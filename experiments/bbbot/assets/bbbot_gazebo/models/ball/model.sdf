@@ -1,0 +1,76 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="basketball">
+    <static>false</static>
+    <link name="ball">
+      <inertial>
+        <!-- <mass>0.62369</mass> -->
+        <mass>0.25</mass>
+        <!-- inertia based on solid sphere 2/5 mr^2 -->
+        <inertia>
+          <!-- <ixx>0.003426762</ixx>
+          <iyy>0.003426762</iyy>
+          <izz>0.003426762</izz> -->
+          <ixx>0.00169</ixx>
+          <iyy>0.00169</iyy>
+          <izz>0.00169</izz>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyz>0</iyz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <sphere>
+            <!-- <radius>0.1172</radius> -->
+            <!-- <radius>0.15</radius> -->
+            <radius>0.13</radius>
+            <!-- <radius>0.14</radius> -->
+          </sphere>
+        </geometry>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <sphere>
+            <!-- <radius>0.1172</radius> -->
+            <radius>0.13</radius>
+            <!-- <radius>0.14</radius> -->
+          </sphere>
+        </geometry>
+        <surface>
+<!--           <contact>
+            <collide_without_contact>0</collide_without_contact>
+            <ode>
+              <soft_cfm>1</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>20000</kp>
+              <kd>0.1</kd>
+            </ode>
+          </contact> -->
+          <friction>
+            <bullet>
+              <!-- <mu>.01</mu>
+              <mu2>.01</mu2> -->
+              <mu>1</mu>
+              <mu2>1</mu2>
+            </bullet>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0.01</restitution_coefficient>
+            <threshold>0.01</threshold>
+          </bounce>
+          <contact>
+            <bullet>
+              <kp>1e12</kp>
+              <kd>1</kd>
+              <split_impulse>1</split_impulse>
+              <split_impulse_penetration_threshold>-0.1</split_impulse_penetration_threshold>
+              <!-- <max_vel>0.1</max_vel>
+              <min_depth>0.0001</min_depth> -->
+            </bullet>
+          </contact>
+        </surface>
+      </collision>
+    </link>
+  </model>
+</sdf>

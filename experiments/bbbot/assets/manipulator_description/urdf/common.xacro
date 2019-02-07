@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="prefix_val" value="" />
+
+  <!-- ros_control plugin -->
+  <xacro:macro name="manipulator_arm_gazebo" params="prefix">
+
+    <!-- Suffix prefix with underscore -->
+    <xacro:if value="${prefix.__len__()}">
+      <xacro:property name="prefix_val" value="${prefix + '_'}" />
+    </xacro:if>
+
+    <gazebo>
+      <!-- <plugin name="${prefix_val}ros_control" filename="libgazebo_ros_control.so"> -->
+      <plugin name="${prefix_val}ros_control" filename="libfilter_gazebo_ros_control.so">
+        <robotNamespace>${prefix}</robotNamespace>
+        <filterJointsParam>joint_names</filterJointsParam>
+        <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>

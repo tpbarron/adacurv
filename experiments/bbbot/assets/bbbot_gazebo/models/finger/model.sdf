@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="basketball">
+    <static>false</static>
+    <link name="finger_link">
+      <visual name="visual">
+        <origin xyz="0 0 0" rpy="1.58 0 0"/>
+        <geometry>
+          <mesh><uri>/Users/trevorbarron/Documents/dev.nosync/thesis/bbbot/assets/bbbot_description/meshes/visual/finger.stl</uri></mesh>
+        </geometry>
+        <material name="white"/>
+      </visual>
+
+      <collision name="collision">
+        <origin xyz="0 0 0" rpy="0 0 1.58"/>
+        <geometry>
+           <mesh><uri>/Users/trevorbarron/Documents/dev.nosync/thesis/bbbot/assets/bbbot_description/meshes/collision/finger.stl</uri></mesh>
+        </geometry>
+      </collision>
+
+      <inertial name="inertial">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.250"/>
+        <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+      </inertial>
+    </link>
+</model>
+</sdf>

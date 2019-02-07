@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"
+       name="manipulator_h" >
+
+  <!-- gazebo related stuff -->
+  <xacro:include filename="$(find manipulator_description)/urdf/common.xacro" />
+
+  <!-- manipulator -->
+  <xacro:include filename="$(find manipulator_description)/urdf/manipulator_h.xacro" />
+
+  <link name="world" />
+
+  <xacro:manipulator_arm_gazebo prefix="" />
+
+  <!-- arm -->
+  <xacro:manipulator_h_arm prefix="" parent="world" joint_limited="false">
+    <origin xyz="0 0 1" rpy="0 1.5707963267948966 0 " />
+  </xacro:manipulator_h_arm>
+</robot>
