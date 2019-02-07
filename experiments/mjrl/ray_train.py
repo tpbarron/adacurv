@@ -143,10 +143,13 @@ if __name__ == "__main__":
     # 25.08s
     # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'natural_adam', False, 5, 5000, 0.001, False, (0.1, 0.1), True, 25000]
     # 25.08s
-    variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'natural_adam', False, 5, 5000, 0.001, True, (0.1, 0.1), True, 25000]
+    # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'natural_adam', False, 5, 5000, 0.001, True, (0.1, 0.1), True, 25000]
     # 20.14s
     # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'ngd', False, 5, 5000, 0.001, False, (0.1, 0.1), True, 25000]
     # 35.17s
     # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'ngd', True, 5, 5000, 0.001, False, (0.1, 0.1), True, 25000]
 
+
+    # variant = [1, 'BasketballEnv-v0', 'trpo', 'natural_adam', True, 5, 5000, 0.0, False, (0.1, 0.1), True, 250000]
+    variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 250000]
     launch_job(tag, variant)

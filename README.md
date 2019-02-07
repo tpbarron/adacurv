@@ -14,8 +14,8 @@ This repository contains two main components.
 
 ## Installation:
 
-  1. Clone this package `git clone https://gitlab.com/adacurv/fang.git`.
-  2. Add the path to this folder to your python path `export PYTHONPATH=$PYTHONPATH:/path/to/fang/`.
+  1. Clone this package `git clone https://github.com/tpbarron/adacurv.git`.
+  2. Add the path to this folder to your python path `export PYTHONPATH=$PYTHONPATH:/path/to/adacurv/`.
   3. Install python dependencies `pip install -r requirements.txt`.
 
 #### Dependencies
