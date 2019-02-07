@@ -32,7 +32,7 @@ class BasketballEnv(gym.Env):
         self.cyl = None
         self.ball = None
 
-        self.hoopStartPos = [1.0, 0.0, 1.0]
+        self.hoopStartPos = [1.5, 0.0, 1.0]
         self.hoopStartOrientation = pb.getQuaternionFromEuler([0,0,0])
         self.cylStartPos = [0.2, 0.0, 0.4+0.2]
         self.cylStartOrientation = pb.getQuaternionFromEuler([0,0,0])
@@ -42,14 +42,18 @@ class BasketballEnv(gym.Env):
         self.initial_ball_z = None
 
         # concat one arm pos, and vel
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(18,))
-        self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(6,))
+        # 12 + 12 + 6
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(30,))
+        self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(12,))
 
     def get_state(self):
         robot_state = self.robot.state()
         ball_state = self.get_ball_state()
         state = np.concatenate([robot_state, ball_state])
         return state
+
+    def close(self):
+        pb.disconnect(physicsClientId=self.client)
 
     def reset(self):
         self.n_step = 0
@@ -111,26 +115,39 @@ class BasketballEnv(gym.Env):
     #     return sol1
 
     def reward_idealized_ball_velocity(self):
-        theta = np.pi / 4.0
+        idealized_lin_vel = self.get_idealized_ball_velocity()
+        if idealized_lin_vel is None:
+            print ("------------------------------------")
+            print ("WARNING: no feasible ball trajectory")
+            print ("------------------------------------")
+            return -1000.0
+
+        ball_lin_vel, ball_ang_vel = pb.getBaseVelocity(self.ball, physicsClientId=self.client)
+        actual_lin_vel = np.array(ball_lin_vel)
+        cost = np.linalg.norm(idealized_lin_vel - actual_lin_vel)
+        # print ("Ball velocity cost: ", cost)
+        return -cost
+        # return np.exp(-0.01*cost)
+
+    def get_idealized_ball_velocity(self):
+        theta = 45.0 * np.pi / 180.0 #np.pi / 4.0
         ball_lin_vel, ball_ang_vel = pb.getBaseVelocity(self.ball, physicsClientId=self.client)
         ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
         hoop_pos, hoop_orient = pb.getBasePositionAndOrientation(self.hoop, physicsClientId=self.client)
 
         x = hoop_pos[0] - ball_pos[0]
-        z = (hoop_pos[2] + 0.2) - ball_pos[2]
+        z = (hoop_pos[2] + 0.1) - ball_pos[2]
 
         g = 10.0
-        v0 = np.sqrt(x**2.0 * g / ( x * np.sin(2.0*theta) - 2.0 * z * np.cos(theta)**2.0 ))
+        term = (x**2.0 * g) / (x * np.sin(2.0 * theta) - 2.0 * z * np.cos(theta)**2.0)
+        if term <= 0.0:
+            return None
+        v0 = np.sqrt( term )
         v0_x = np.cos(theta) * v0
         v0_z = np.sin(theta) * v0
 
         idealized_lin_vel = np.array([v0_x, 0.0, v0_z])
-        actual_lin_vel = np.array(ball_lin_vel)
-
-        cost = np.linalg.norm(idealized_lin_vel - actual_lin_vel)
-        # print ("Ball vel cost: ", cost)
-        # input("")
-        return -cost
+        return idealized_lin_vel
 
     def reward_distance_to_hoop(self):
         ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
@@ -172,11 +189,14 @@ class BasketballEnv(gym.Env):
         ball_pos = np.array(ball_pos)
         hoop_pos = np.array(hoop_pos)
 
+        # print ("Ball pos: ", ball_pos)
+        # print ("Hoop pos: ", hoop_pos)
         dist_to_hoop = np.linalg.norm(ball_pos[0:2] - hoop_pos[0:2])
+        # print ("Dist to hoop in x-y plane: ", dist_to_hoop, ball_radius, hoop_radius)
         if dist_to_hoop + ball_radius > hoop_radius:
             return False
 
-        if ball_pos[2] > hoop_aabb[1][2]:
+        if ball_pos[2] < hoop_aabb[1][2]:
             return False
 
         return True
@@ -196,27 +216,46 @@ class BasketballEnv(gym.Env):
         return False
 
     def ball_on_cyl(self):
+        ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
         ball_lin_vel, ball_ang_vel = pb.getBaseVelocity(self.ball, physicsClientId=self.client)
-        if ball_lin_vel[2] < 1e-5:
-            # probably sitting on cyl
+        if np.abs(ball_pos[2] - self.initial_ball_z) < 0.01:
             return True
+        # if ball_lin_vel[2] < 1e-5:
+        #     # probably sitting on cyl
+        #     return True
         return False
 
     def complete_trajectory(self):
-        while True:
-            # print ("complete_trajectory")
-            if self.ball_caught():
-                return 1.0
-            elif self.ball_out_of_play():
-                return -1000.0
-                # return self.reward_distance_to_hoop()
-            elif self.ball_on_cyl():
-                return -1000.0
-            else:
-                for i in range(10):
-                    pb.stepSimulation(physicsClientId=self.client)
-                    if self.delay:
-                        time.sleep(1./240.)
+        for i in range(250):
+            pb.stepSimulation(physicsClientId=self.client)
+            if self.delay:
+                time.sleep(1./240.)
+        if self.ball_caught():
+            print ("-----------")
+            print ("Ball caught")
+            print ("-----------")
+            return 1000.0
+        elif self.ball_on_cyl():
+            # print ("-----------")
+            print ("Ball on cyl")
+            # print ("-----------")
+            return -1000.0
+        return -1.0 #self.reward_idealized_ball_velocity()
+
+        # while True:
+        #     # print ("complete_trajectory")
+        #     if self.ball_caught():
+        #         return 1000.0
+        #     elif self.ball_out_of_play():
+        #         return -1000.0
+        #         # return self.reward_distance_to_hoop()
+        #     elif self.ball_on_cyl():
+        #         return -1000.0
+        #     else:
+        #         for i in range(10):
+        #             pb.stepSimulation(physicsClientId=self.client)
+        #             if self.delay:
+        #                 time.sleep(1./240.)
 
     def get_ball_state(self):
         ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
@@ -227,6 +266,7 @@ class BasketballEnv(gym.Env):
         self.n_step += 1
         self.robot.act(action)
 
+        done = False
         state = self.get_state()
         # print (state.shape)
         # input("")
@@ -240,8 +280,10 @@ class BasketballEnv(gym.Env):
             # rew = self.reward_distance_to_hoop()
             # rew = self.reward_predicted_ball_trajectory()
             rew = self.reward_idealized_ball_velocity()
+            # if rew == -1000:
+            #     done = True
 
-        done = thrown or self.n_step >= self.horizon
+        done = done or thrown or self.n_step >= self.horizon
         return state, rew, done, {}
 
     # def step(self, action):
@@ -267,13 +309,27 @@ if __name__ == "__main__":
     obs = env.reset()
     print (obs, env)
 
+    # env.robot.move_to_initial_position()
+    # for i in range(100):
+    #     pb.stepSimulation()
+    # ideal_vel = env.get_idealized_ball_velocity()
+    # pb.resetBaseVelocity(env.ball, linearVelocity=ideal_vel)
+    # i = 0
+    # while True:
+    #     import time
+    #     time.sleep(0.1) #1.0/240.0)
+    #     pb.stepSimulation()
+    #     i += 1
+    #     print (i)
+
     while True:
         done = False
         while not done:
             import time
             time.sleep(1.0/240.0)
-            action = np.random.randn(6)
+            action = np.random.randn(6) * 10.0
             obs, rew, done, info = env.step(action)
             # print ("Caught: ", env.ball_caught())
             # print ("Out of play: ", env.ball_out_of_play())
         obs = env.reset()
+        print ("REsetting")

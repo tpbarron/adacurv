@@ -17,7 +17,7 @@ class BasketballRobot:
 
 
     def state(self):
-        joint_states = pb.getJointStates(self.robot, self.joint_indices_left, physicsClientId=self.pb_client_id)
+        joint_states = pb.getJointStates(self.robot, self.joint_indices_left+self.joint_indices_right, physicsClientId=self.pb_client_id)
         # positions
         state = [j[0] for j in joint_states]
         # velocities
@@ -52,7 +52,7 @@ class BasketballRobot:
         pb.setJointMotorControlArray(self.robot, self.joint_indices_left, pb.VELOCITY_CONTROL, targetVelocities=z, physicsClientId=self.pb_client_id)
         pb.setJointMotorControlArray(self.robot, self.joint_indices_right, pb.VELOCITY_CONTROL, targetVelocities=z, physicsClientId=self.pb_client_id)
 
-    def act(self, u, mode=pb.VELOCITY_CONTROL, action_repeat=4):
+    def act(self, u, mode=pb.VELOCITY_CONTROL, action_repeat=10):
         """
         u should be a vector of inputs for the left arm, will be mirrors on the right
         """
@@ -76,16 +76,26 @@ class BasketballRobot:
             pb.setJointMotorControlArray(self.robot, self.joint_indices_right, mode, targetPositions=target_right, physicsClientId=self.pb_client_id)
 
         elif mode == pb.VELOCITY_CONTROL:
-            u_left = u.copy()
-            u_right = u.copy()
-            u_right[0] *= -1
+            u_left = u[0:6] #.copy()
+            u_right = u[6:12]
+            # u_right[0] *= -1
+
+            # u_left = u.copy()
+            # u_right = u.copy()
+            # u_right[0] *= -1
             forces = [1000.0] * 6
 
             pb.setJointMotorControlArray(self.robot, self.joint_indices_left, mode, targetVelocities=u_left, forces=forces, physicsClientId=self.pb_client_id)
             pb.setJointMotorControlArray(self.robot, self.joint_indices_right, mode, targetVelocities=u_right, forces=forces, physicsClientId=self.pb_client_id)
+        elif mode == pb.TORQUE_CONTROL:
+            u *= 100.0
+            u_left = u.copy()
+            u_right = u.copy()
+            u_right[0] *= -1
 
-            # pb.setJointMotorControlArray(self.robot, self.joint_indices_left, mode, forces=u_left)
-            # pb.setJointMotorControlArray(self.robot, self.joint_indices_right, mode, forces=u_right)
+            pb.setJointMotorControlArray(self.robot, self.joint_indices_left, mode, forces=u_left, physicsClientId=self.pb_client_id)
+            pb.setJointMotorControlArray(self.robot, self.joint_indices_right, mode, forces=u_right, physicsClientId=self.pb_client_id)
+
 
         for s in range(action_repeat):
             pb.stepSimulation(physicsClientId=self.pb_client_id)

@@ -33,6 +33,9 @@ class GymEnv(object):
         # Specs
         self.spec = EnvSpec(self._observation_dim, self._action_dim, self._horizon, self._num_agents)
 
+    def __del__(self):
+        self.env.close()
+
     @property
     def action_dim(self):
         return self._action_dim
