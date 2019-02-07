@@ -64,10 +64,11 @@ def launch_job(tag, variant):
 
     e = GymEnv('BasketballEnvRendered-v0')
 
-    N = 3
-    T = 100
-    paths = base_sampler.do_rollout(N, policy, T, e, None, 0)
-    print (paths[0]['rewards'].sum())
+    N = 5
+    T = 500
+    paths = base_sampler.do_rollout(N, policy, T, e, None)
+    for p in paths:
+        print (p['rewards'].sum())
 
 if __name__ == "__main__":
     tag = 'test'
@@ -80,7 +81,11 @@ if __name__ == "__main__":
 
 
 
+    # tag = 'test'
+    # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 250000]
+
     tag = 'bball'
+    # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 250000]
     variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 250000]
 
     launch_job(tag, variant)

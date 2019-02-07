@@ -132,7 +132,7 @@ def launch_job(tag, variant):
 if __name__ == "__main__":
     # Test
     # tag = 'walker2d_test'
-    tag = 'test'
+    tag = 'bball'
     # seed x envs x algo x optim x shrunk(bool), lanczos k x batch size x lr x approx adaptive x betas x (use nn policy)
     # variant = [1, 'InvertedPendulumBulletEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.01, False, (0.0, 0.0), False, 200000]
     # variant = [1, 'HalfCheetahBulletEnv-v0', 'natural_adam', False, 100, 5000, 0.05, False, (0.1, 0.1), True, 250000]
@@ -151,5 +151,6 @@ if __name__ == "__main__":
 
 
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'natural_adam', True, 5, 5000, 0.0, False, (0.1, 0.1), True, 250000]
+    # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 250000]
     variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 250000]
     launch_job(tag, variant)

@@ -1,4 +1,5 @@
 import os
+import time
 
 import gym
 from gym import error, spaces
@@ -31,7 +32,7 @@ class BasketballEnv(gym.Env):
         self.cyl = None
         self.ball = None
 
-        self.hoopStartPos = [2.0, 0.0, 1.0]
+        self.hoopStartPos = [1.0, 0.0, 1.0]
         self.hoopStartOrientation = pb.getQuaternionFromEuler([0,0,0])
         self.cylStartPos = [0.2, 0.0, 0.4+0.2]
         self.cylStartOrientation = pb.getQuaternionFromEuler([0,0,0])
@@ -75,11 +76,61 @@ class BasketballEnv(gym.Env):
     # def reward_predicted_ball_trajectory(self):
     #     ball_lin_vel, ball_ang_vel = pb.getBaseVelocity(self.ball)
     #     ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball)
+    #     hoop_pos, hoop_orient = pb.getBasePositionAndOrientation(self.hoop, physicsClientId=self.client)
     #
+    #     ball_lin_vel = np.array(ball_lin_vel)
     #     v0 = np.linalg.norm(ball_lin_vel)
-    #     theta = pass
     #
-    #     return 1.0
+    #     print ("v0:", v0)
+    #
+    #     ball_vec = ball_lin_vel.copy()
+    #     ball_vec_proj = ball_vec.copy()
+    #     ball_vec_proj[2] = 0.0
+    #
+    #     print ("Vecs: ", ball_vec, ball_vec_proj)
+    #     theta = np.arccos(np.dot(ball_vec, ball_vec_proj) / (np.linalg.norm(ball_vec) * np.linalg.norm(ball_vec_proj)))
+    #     print ("Theta: ", theta)
+    #
+    #     z_h = hoop_pos[2] + 0.1 - ball_pos[2]
+    #     print ("Zh: ", z_h)
+    #
+    #     a = np.tan(theta)
+    #     b = 10.0 / (v0**2.0 * np.cos(theta)**2.0)
+    #
+    #     print ("a,b: ", a, b)
+    #     c1 = 0.5 * b ** 2.0
+    #     c2 = 1.5 * a * b
+    #     c3 = 1. + a**2.0 - b * z_h
+    #
+    #     print ("c1, c2, c3: ", c1, c2, c3)
+    #     sol1 = (-c2 + np.sqrt(c2**2.0 - 4.0 * c1 * c3)) / (2.0 * c1)
+    #     print ("Sol: ", sol1)
+    #     sol2 = (-c2 - np.sqrt(c2**2.0 - 4.0 * c1 * c3)) / (2.0 * c1)
+    #     print ("Sol: ", sol2)
+    #     input("")
+    #     return sol1
+
+    def reward_idealized_ball_velocity(self):
+        theta = np.pi / 4.0
+        ball_lin_vel, ball_ang_vel = pb.getBaseVelocity(self.ball, physicsClientId=self.client)
+        ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
+        hoop_pos, hoop_orient = pb.getBasePositionAndOrientation(self.hoop, physicsClientId=self.client)
+
+        x = hoop_pos[0] - ball_pos[0]
+        z = (hoop_pos[2] + 0.2) - ball_pos[2]
+
+        g = 10.0
+        v0 = np.sqrt(x**2.0 * g / ( x * np.sin(2.0*theta) - 2.0 * z * np.cos(theta)**2.0 ))
+        v0_x = np.cos(theta) * v0
+        v0_z = np.sin(theta) * v0
+
+        idealized_lin_vel = np.array([v0_x, 0.0, v0_z])
+        actual_lin_vel = np.array(ball_lin_vel)
+
+        cost = np.linalg.norm(idealized_lin_vel - actual_lin_vel)
+        # print ("Ball vel cost: ", cost)
+        # input("")
+        return -cost
 
     def reward_distance_to_hoop(self):
         ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
@@ -157,7 +208,8 @@ class BasketballEnv(gym.Env):
             if self.ball_caught():
                 return 1.0
             elif self.ball_out_of_play():
-                return self.reward_distance_to_hoop()
+                return -1000.0
+                # return self.reward_distance_to_hoop()
             elif self.ball_on_cyl():
                 return -1000.0
             else:
@@ -185,7 +237,9 @@ class BasketballEnv(gym.Env):
             rew = self.complete_trajectory()
         else:
             # rew = self.reward_predicted_ball_trajectory()
-            rew = self.reward_distance_to_hoop()
+            # rew = self.reward_distance_to_hoop()
+            # rew = self.reward_predicted_ball_trajectory()
+            rew = self.reward_idealized_ball_velocity()
 
         done = thrown or self.n_step >= self.horizon
         return state, rew, done, {}
@@ -216,8 +270,8 @@ if __name__ == "__main__":
     while True:
         done = False
         while not done:
-            # import time
-            # time.sleep(1.0/240.0)
+            import time
+            time.sleep(1.0/240.0)
             action = np.random.randn(6)
             obs, rew, done, info = env.step(action)
             # print ("Caught: ", env.ball_caught())

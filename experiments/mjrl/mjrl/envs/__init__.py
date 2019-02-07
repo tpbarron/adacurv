@@ -19,13 +19,13 @@ register(
 register(
     id='BasketballEnv-v0',
     entry_point='bbbot.basketball_env:BasketballEnv',
-    max_episode_steps=100,
+    max_episode_steps=500,
 )
 
 register(
     id='BasketballEnvRendered-v0',
     entry_point='bbbot.basketball_env:BasketballEnvRendered',
-    max_episode_steps=100,
+    max_episode_steps=500,
 )
 # from mjrl.envs.mujoco_env import MujocoEnv
 # ^^^^^ so that user gets the correct error

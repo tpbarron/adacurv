@@ -79,9 +79,10 @@ class BasketballRobot:
             u_left = u.copy()
             u_right = u.copy()
             u_right[0] *= -1
+            forces = [1000.0] * 6
 
-            pb.setJointMotorControlArray(self.robot, self.joint_indices_left, mode, targetVelocities=u_left, physicsClientId=self.pb_client_id)
-            pb.setJointMotorControlArray(self.robot, self.joint_indices_right, mode, targetVelocities=u_right, physicsClientId=self.pb_client_id)
+            pb.setJointMotorControlArray(self.robot, self.joint_indices_left, mode, targetVelocities=u_left, forces=forces, physicsClientId=self.pb_client_id)
+            pb.setJointMotorControlArray(self.robot, self.joint_indices_right, mode, targetVelocities=u_right, forces=forces, physicsClientId=self.pb_client_id)
 
             # pb.setJointMotorControlArray(self.robot, self.joint_indices_left, mode, forces=u_left)
             # pb.setJointMotorControlArray(self.robot, self.joint_indices_right, mode, forces=u_right)
