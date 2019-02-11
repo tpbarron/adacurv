@@ -1,0 +1,56 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="basketball">
+    <static>false</static>
+    <link name="ball">
+      <inertial>
+        <mass>0.625</mass>
+        <!-- inertia based on solid sphere 2/5 mr^2 -->
+        <inertia>
+          <ixx>0.00368</ixx>
+          <iyy>0.00368</iyy>
+          <izz>0.00368</izz>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyz>0</iyz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <sphere>
+            <radius>0.1213</radius>
+          </sphere>
+        </geometry>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <sphere>
+            <radius>0.1213</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <friction>
+            <bullet>
+              <mu>.01</mu>
+              <mu2>.01</mu2>
+              <!-- <mu>1</mu>
+              <mu2>1</mu2> -->
+            </bullet>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0.853</restitution_coefficient>
+            <threshold>0.0</threshold>
+          </bounce>
+          <!-- <contact>
+            <bullet>
+              <kp>1e12</kp>
+              <kd>1</kd>
+              <split_impulse>1</split_impulse>
+              <split_impulse_penetration_threshold>-0.1</split_impulse_penetration_threshold>
+            </bullet>
+          </contact> -->
+        </surface>
+      </collision>
+    </link>
+  </model>
+</sdf>

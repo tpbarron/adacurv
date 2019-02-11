@@ -36,9 +36,9 @@ def cg_solve(F,
         mu = newrdotr / rdotr
         p = r + mu * p
         rdotr = newrdotr
-
-        if rdotr < cg_residual_tol:
-            break
+        # print ("rdotr tru: ", rdotr)
+        # if rdotr < cg_residual_tol:
+        #     break
 
     obj = x.T @ F(x) - 2 * b.T @ x
     print ("J: ", obj)
@@ -83,8 +83,8 @@ def cg_solve_random_new_res_rand_dir(F,
         # Random update
         d = np.random.randn(A.shape[0], 1)
         d = d / np.linalg.norm(d)
-        print ("Norm of d: ", np.linalg.norm(d))
-        print ("norm of r: ", rnorm)
+        # print ("Norm of d: ", np.linalg.norm(d))
+        # print ("norm of r: ", rnorm)
         # input("")
         directions.append(d)
         z = F(d) + damping * d
@@ -144,8 +144,8 @@ def cg_solve_random_old_res_new_dir(F,
         p = r + mu * p
         rdotr = newrdotr
 
-        if rdotr < cg_residual_tol:
-            break
+        # if rdotr < cg_residual_tol:
+        #     break
 
     obj = x.T @ F(x) - 2 * b.T @ x
     print ("J: ", obj)
@@ -181,7 +181,8 @@ def cg_solve_random_old_res_coord_dir(F,
     rdotr = np.dot(r.T, r)
     rdotr_orig = rdotr.copy()
 
-    dirs = np.eye(cg_iters)
+    cg_iters = b.shape[0]
+    dirs = np.eye(b.shape[0])
     directions = []
     for i in range(cg_iters):
         obj = x.T @ F(x) - 2 * b.T @ x
@@ -194,11 +195,11 @@ def cg_solve_random_old_res_coord_dir(F,
         z = hvp_p
         v = np.dot(p.T, rorig) / np.dot(p.T, z) #p.dot(z)
         x += v * p
-        r -= v * z
-        newrdotr = np.dot(r.T, r) #r.dot(r)
-        mu = newrdotr / rdotr
-        p = r + mu * p
-        rdotr = newrdotr
+        # r -= v * z
+        # newrdotr = np.dot(r.T, r) #r.dot(r)
+        # mu = newrdotr / rdotr
+        # p = r + mu * p
+        # rdotr = newrdotr
 
         if rdotr < cg_residual_tol:
             break
@@ -215,51 +216,61 @@ def cg_solve_random_old_res_coord_dir(F,
 
     return x, rdotr
 
-# def cg_solve_random(F,
-#                     b,
-#                     x_0=None,
-#                     cg_iters=10,
-#                     cg_residual_tol=1e-10,
-#                     damping=1e-4):
-#     # x_0 = np.random.randn(F.shape[0],1)
-#     x = np.zeros_like(b) if x_0 is None else x_0
-#     if x_0 is not None:
-#         hvp_x0 = F @ x + damping * x
-#
-#     r = b.copy() if x_0 is None else b-hvp_x0
-#     # rdotr = np.dot(r.T, r)
-#
-#     obj = x.T @ (F @ x) - 2 * b.T @ x
-#     print ("RandJ: ", obj)
-#     # 1) generate unit vector of random direction
-#     d = r
-#     q = F @ d + damping * d
-#     alpha = np.dot(d.T, r) / np.dot(d.T, q)
-#     x += alpha * d
-#
-#     r = b - F @ x + damping * x
-#
-#     for i in range(cg_iters):
-#         obj = x.T @ (F @ x) - 2 * b.T @ x
-#         print ("RandJ: ", obj)
-#         # 1) generate unit vector of random direction
-#         d = np.random.randn(A.shape[0], 1)
-#         # d = np.random.uniform(low=-1.0, high=1.0, size=(A.shape[0], 1))
-#         d /= np.linalg.norm(d)
-#
-#         q = F @ d + damping * d
-#         alpha = np.dot(d.T, r) / np.dot(d.T, q)
-#         x += alpha * d
-#
-#     r_tmp = b - F @ x
-#     rdotr_tmp = np.dot(r_tmp.T, r_tmp)
-#     return x, rdotr_tmp
+
+# or use proper dirctions but use original resid
+def cg_solve_random_old_res_random_dir(F,
+                    b,
+                    x_0=None,
+                    cg_iters=10,
+                    cg_residual_tol=1e-10,
+                    damping=1e-4):
+
+    x = np.zeros_like(b) if x_0 is None else x_0
+    if x_0 is not None:
+        hvp_x0 = F(x) + damping * x
+
+    r = b.copy() if x_0 is None else b-hvp_x0
+    p = r.copy()
+    rorig = r.copy()
+    rdotr = np.dot(r.T, r)
+    rdotr_orig = rdotr.copy()
+    directions = []
+    for i in range(cg_iters):
+        obj = x.T @ F(x) - 2 * b.T @ x
+        print ("J: ", obj)
+
+        # Random update
+        d = np.random.randn(A.shape[0], 1)
+        d = d / np.linalg.norm(d)
+        # print ("Norm of d: ", np.linalg.norm(d))
+        # print ("norm of r: ", rnorm)
+        directions.append(d)
+        z = F(d) + damping * d
+        v = np.dot(d.T, rorig) / np.dot(d.T, z)
+        xnew = x + v * d
+        obj = xnew.T @ F(xnew) - 2 * b.T @ xnew
+        print ("Jnew: ", obj)
+        # x += v * d
+
+    # obj = x.T @ F(x) - 2 * b.T @ x
+    # print ("J: ", obj)
+    #
+    # nd = len(directions)
+    # M = np.zeros((nd, nd))
+    # for i in range(nd):
+    #     for j in range(i):
+    #         orth = np.dot(directions[i].T, directions[j])
+    #         M[i,j] = orth
+    # print (M)
+
+    return x, rdotr
+
 
 if __name__ == '__main__':
-    d = 10
-    A = np.eye(d)
-    # A = np.random.randn(d, 10)
-    # A = A @ A.T
+    d = 100
+    # A = np.eye(d)
+    A = np.random.randn(d, 10)
+    A = A @ A.T
     # print (A.shape)
     b = np.random.randn(d, 1)
 
@@ -271,15 +282,18 @@ if __name__ == '__main__':
     x_min, x_resid = cg_solve(mv, b)
     print (x_min.shape, x_resid)
 
-    print ("Random A")
+    print ("Random A (new residual, random dir)")
     # x_min_rand, x_resid_rand = cg_solve_random_new_res_rand_dir(A, b)
     x_min_rand, x_resid_rand = cg_solve_random_new_res_rand_dir(mv, b)
     print (x_min_rand.shape, x_resid_rand)
 
-    print ("Random B")
+    print ("Random B (old residual, new dir)")
     # # x_min_rand, x_resid_rand = cg_solve_random_old_res_new_dir(A, b)
     x_min_rand, x_resid_rand = cg_solve_random_old_res_new_dir(mv, b)
     # print (x_min_rand.shape, x_resid_rand)
 
-    print ("Random C")
+    print ("Random C (old residual, coord dir)")
     x_min_rand, x_resid_rand = cg_solve_random_old_res_coord_dir(mv, b)
+
+    print ("Random D (old residtual, random dir)")
+    x_min_rand, x_resid_rand = cg_solve_random_old_res_random_dir(mv, b)
