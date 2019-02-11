@@ -130,7 +130,7 @@ class BasketballEnv(gym.Env):
         # return np.exp(-0.01*cost)
 
     def get_idealized_ball_velocity(self):
-        theta = 45.0 * np.pi / 180.0 #np.pi / 4.0
+        theta = 55.0 * np.pi / 180.0 #np.pi / 4.0
         ball_lin_vel, ball_ang_vel = pb.getBaseVelocity(self.ball, physicsClientId=self.client)
         ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
         hoop_pos, hoop_orient = pb.getBasePositionAndOrientation(self.hoop, physicsClientId=self.client)

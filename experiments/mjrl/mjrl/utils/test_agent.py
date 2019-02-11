@@ -64,14 +64,14 @@ def launch_job(tag, variant):
 
     e = GymEnv('BasketballEnvRendered-v0')
 
-    N = 5
-    T = 500
+    N = 10
+    T = 250
     paths = base_sampler.do_rollout(N, policy, T, e, None)
     for p in paths:
         print (p['rewards'].sum())
 
 if __name__ == "__main__":
-    tag = 'test'
+    # tag = 'test'
     # seed x envs x algo x optim x shrunk(bool), lanczos k x batch size x lr x approx adaptive x betas x (use nn policy)
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.0, False, (0.1, 0.1), True, 250000]
@@ -99,7 +99,14 @@ if __name__ == "__main__":
     # tag = 'bball_hoop1.5_torqctrl'
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 500000]
 
-    tag = 'bball_hoop1.5_velctrl_botharms'
-    variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 500000]
+    # tag = 'bball_hoop1.5_velctrl_botharms'
+    # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 500000]
+
+    # tag = 'bball_hoop1.5_velctrl_botharms_angle45'
+    # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
+
+    tag = 'bball_hoop1.5_velctrl_botharms_angle55'
+    # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
+    variant = [1, 'BasketballEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
 
     launch_job(tag, variant)
