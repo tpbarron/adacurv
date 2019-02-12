@@ -94,43 +94,6 @@ class NGD(Optimizer):
             self._numel_cache = reduce(lambda total, p: total + p.numel(), self._params, 0)
         return self._numel_cache
 
-    # def _make_fvp_fun(self, closure, theta):
-    #     """
-    #     Simply create Fvp func that doesn't require theta input so that lanczos and CG can be called
-    #     with generic hvp funcs.
-    #     """
-    #     import time
-    #     s = time.time()
-    #     c, _ = closure(theta)
-    #     e = time.time()
-    #     # print ("Closure time: ", (e-s))
-    #     def f(v):
-    #         hessp = Fvp(c, theta, v)
-    #         return hessp.data
-    #     return f
-    #
-    # def _make_hvp_fun(self, closure, theta):
-    #     """
-    #     Simply create Fvp func that doesn't require theta input so that lanczos and CG can be called
-    #     with generic hvp funcs.
-    #     """
-    #     c, z = closure(self._params)
-    #     def f(v):
-    #         hessp = Hvp(c, self._params, v)
-    #         return hessp.data
-    #     return f
-    #
-    # def _make_gnvp_fun(self, closure, theta):
-    #     """
-    #     Simply create Fvp func that doesn't require theta input so that lanczos and CG can be called
-    #     with generic hvp funcs.
-    #     """
-    #     c, z = closure(self._params)
-    #     def f(v):
-    #         hessp = GNvp_RopLop(c, z, self._params, v)
-    #         return hessp.data
-    #     return f
-
     def step(self, closure, execute_update=True): #Fvp_fn, execute_update=True, closure=None):
         """Performs a single optimization step.
 
@@ -162,13 +125,28 @@ class NGD(Optimizer):
             w = lanczos_iteration(Fvp_theta_fn, self._params, k=self._param_group['lanczos_iters'])
             rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
 
-        ng = cg_solve(Fvp_theta_fn,
+        ng, T = cg_solve(Fvp_theta_fn,
                       g.data.clone(),
                       cg_iters=self._param_group['cg_iters'],
                       cg_residual_tol=self._param_group['cg_residual_tol'],
                       shrunk=self._param_group['shrunk'],
                       rho=rho,
-                      Dshrunk=diag_shrunk)
+                      Dshrunk=diag_shrunk,
+                      extract_tridiag=True)
+
+        # np.set_printoptions(precision=2)
+        # from scipy.linalg import eigvalsh_tridiagonal
+        # import time
+        # s = time.time()
+        # w = eigvalsh_tridiagonal(np.diag(T), np.diag(T, k=1))
+        # e = time.time()
+        # rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
+        # print ("shrinkage by cg: ", rho, (e-s))
+        #
+        # w = lanczos_iteration(Fvp_theta_fn, self._params, k=10) #self._param_group['lanczos_iters'])
+        # rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
+        # print ("shrinkage by lanczos: ", rho)
+        # input("")
 
         state['ng_prior'] = ng.data.clone()
 

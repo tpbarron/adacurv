@@ -6,7 +6,7 @@ from torch.nn.utils import parameters_to_vector
 from scipy.sparse.linalg import LinearOperator
 from scipy.sparse.linalg import eigsh
 
-def lanczos_iteration(Fvp_fn, params, k=20):
+def lanczos_iteration_scipy(Fvp_fn, params, k=20):
     """
     Fvp_fn must have parameters closure
     That is
@@ -23,6 +23,44 @@ def lanczos_iteration(Fvp_fn, params, k=20):
     except ArpackNoConvergence as arpack:
         w = arpack.eigenvalues
     return w
+
+
+def lanczos_iteration(Fvp_fn, params, k=20):
+    theta = parameters_to_vector(params)
+    n_params = len(theta)
+
+    v = torch.FloatTensor(n_params).uniform_()
+    v /= torch.norm(v, 2)
+
+    diag = []
+    diag_adj = []
+
+    w = Fvp_fn(v)
+    alpha = w.dot(v)
+    w -= alpha * v
+    diag.append(alpha)
+
+    for i in range(k-1):
+        beta = torch.norm(w, 2)
+        if beta == 0:
+            break
+        v_prev = v.clone()
+        v = w / beta
+        w = Fvp_fn(v)
+        alpha = w.dot(v)
+        diag.append(alpha)
+        diag_adj.append(beta)
+        w = w - alpha * v - beta * v_prev
+
+    diag, diag_adj = np.array(diag), np.array(diag_adj)
+    from scipy.linalg import eigvalsh_tridiagonal
+    w = eigvalsh_tridiagonal(np.array(diag), np.array(diag_adj))
+    return w
+    # # rho, d = estimate_shrinkage(w)
+    # # input("")
+    #
+    # return np.array(diag), np.array(diag_adj)
+
 
 def estimate_shrinkage(eigvals, p, batch_size):
     # Tr(s) = Sum(\lambda_i)
