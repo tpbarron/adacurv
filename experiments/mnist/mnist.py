@@ -13,7 +13,7 @@ import numpy as np
 #import matplotlib.pyplot as plt
 
 from torch.optim.lr_scheduler import LambdaLR
-from fisher.optim.hvp_utils import build_Fvp, mean_kl_multinomial
+from fisher.optim.hvp_utils import kl_closure, loss_closure, build_Fvp, mean_kl_multinomial
 
 
 class Net(nn.Module):
@@ -23,12 +23,14 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(784, 100)
         self.fc2 = nn.Linear(100, 10)
 
-    def forward(self, x):
+    def forward(self, x, return_z=False):
         # x = x.view(-1, 784)
         # x = self.fc1(x)
         x = x.view(-1, 784)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
+        if return_z:
+            return F.log_softmax(x, dim=1), x
         return F.log_softmax(x, dim=1)
 
 def log_stats(accuracies, losses, times, args, model, device, test_loader, epoch, batch_idx):
@@ -61,8 +63,11 @@ def train(args, model, device, train_loader, test_loader, optimizer, epoch, data
         loss = F.nll_loss(output, target)
         loss.backward()
         if args.optim not in ["sgd", "adam", "rmsprop", "amsgrad", "adagrad"]:
-            Fvp_fn = build_Fvp(model, data, target, mean_kl_multinomial)
-            optimizer.step(Fvp_fn)
+            # Fvp_fn = build_Fvp(model, data, target, mean_kl_multinomial)
+            # optimizer.step(Fvp_fn)
+            closure = kl_closure(model, data, target, mean_kl_multinomial)
+            # closure = loss_closure(model, data, target, F.nll_loss)
+            optimizer.step(closure)
         else:
             optimizer.step()
 

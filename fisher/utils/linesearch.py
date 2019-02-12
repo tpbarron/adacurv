@@ -89,6 +89,9 @@ def backtracking_linesearch(f, fprime, theta_old, pk, alpha0=1.0, tau=0.001, c=1
 
 def randomized_linesearch(f, theta_old, theta, nevals=10, eps=1e-8):
     # TODO: parallelize calls to f
+    # This could be done in parallel but since the variable is the model parameters
+    # it would require each model to exist separately in memory, which in some cases wouldn't be
+    # possible.
     alphas = np.linspace(0.0+eps, 1.0-eps, nevals)
     min_th = None
     min_f = None

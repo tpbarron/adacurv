@@ -3,6 +3,8 @@ import torch
 from torch.optim.optimizer import Optimizer, required
 
 from torch.nn.utils import parameters_to_vector
+
+from fisher.optim.hvp_closures import make_fvp_fun
 from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
 from fisher.utils.cg import cg_solve
 from fisher.utils.lanczos import lanczos_iteration, estimate_shrinkage
@@ -92,17 +94,44 @@ class NGD(Optimizer):
             self._numel_cache = reduce(lambda total, p: total + p.numel(), self._params, 0)
         return self._numel_cache
 
-    def _make_hvp_fun(self, Fvp_fn, theta):
-        """
-        Simply create Fvp func that doesn't require theta input so that lanczos and CG can be called
-        with generic hvp funcs.
-        """
-        def f(v):
-            hessp = Fvp_fn(theta, v)
-            return hessp.data
-        return f
+    # def _make_fvp_fun(self, closure, theta):
+    #     """
+    #     Simply create Fvp func that doesn't require theta input so that lanczos and CG can be called
+    #     with generic hvp funcs.
+    #     """
+    #     import time
+    #     s = time.time()
+    #     c, _ = closure(theta)
+    #     e = time.time()
+    #     # print ("Closure time: ", (e-s))
+    #     def f(v):
+    #         hessp = Fvp(c, theta, v)
+    #         return hessp.data
+    #     return f
+    #
+    # def _make_hvp_fun(self, closure, theta):
+    #     """
+    #     Simply create Fvp func that doesn't require theta input so that lanczos and CG can be called
+    #     with generic hvp funcs.
+    #     """
+    #     c, z = closure(self._params)
+    #     def f(v):
+    #         hessp = Hvp(c, self._params, v)
+    #         return hessp.data
+    #     return f
+    #
+    # def _make_gnvp_fun(self, closure, theta):
+    #     """
+    #     Simply create Fvp func that doesn't require theta input so that lanczos and CG can be called
+    #     with generic hvp funcs.
+    #     """
+    #     c, z = closure(self._params)
+    #     def f(v):
+    #         hessp = GNvp_RopLop(c, z, self._params, v)
+    #         return hessp.data
+    #     return f
 
-    def step(self, Fvp_fn, execute_update=True, closure=None):
+    def step(self, closure, execute_update=True): #Fvp_fn, execute_update=True, closure=None):
         """Performs a single optimization step.
 
         Arguments:
@@ -123,7 +152,9 @@ class NGD(Optimizer):
             state['ng_prior'] = g.data.clone()
 
         # Create closure to pass to Lanczos and CG
-        Fvp_theta_fn = self._make_hvp_fun(Fvp_fn, parameters_to_vector(self._params).clone())
+        Fvp_theta_fn = make_fvp_fun(closure, self._params)
+        # Fvp_theta_fn = self._make_gnvp_fun(closure, self._params)
+        # Fvp_theta_fn = self._make_hvp_fun(closure, self._params)
 
         # Do CG solve with hvp fn closure
         rho, diag_shrunk = 0.0, 1.0
