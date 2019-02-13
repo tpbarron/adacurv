@@ -2,6 +2,8 @@ import numpy as np
 from scipy.optimize import line_search
 from scipy.optimize import fmin_l_bfgs_b
 
+from pathos.multiprocessing import ProcessingPool as Pool
+
 def wolfe_linesearch():
     pass
     # pk = theta - theta_old
@@ -91,7 +93,8 @@ def randomized_linesearch(f, theta_old, theta, nevals=10, eps=1e-8):
     # TODO: parallelize calls to f
     # This could be done in parallel but since the variable is the model parameters
     # it would require each model to exist separately in memory, which in some cases wouldn't be
-    # possible.
+    # possible. It appears the pathos library could handle the closures but would need care because
+    # model would need to be copied.
     alphas = np.linspace(0.0+eps, 1.0-eps, nevals)
     min_th = None
     min_f = None

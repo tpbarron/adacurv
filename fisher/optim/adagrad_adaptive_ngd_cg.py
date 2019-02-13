@@ -6,7 +6,7 @@ from torch.autograd import Variable
 from torch.optim.optimizer import Optimizer, required
 from torch.nn.utils import vector_to_parameters, parameters_to_vector
 
-from fisher.optim.hvp_closures import make_fvp_fun, make_fvp_obj_fun
+from fisher.optim.hvp_closures import make_fvp_fun, make_gnvp_fun, make_fvp_obj_fun, make_gnvp_obj_fun
 from fisher.optim.hvp_utils import Fvp, Hvp, GNvp
 
 from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
@@ -18,8 +18,16 @@ from functools import reduce
 
 class NaturalAdagrad(Optimizer):
 
-    def __init__(self, params, lr=required, cg_iters=10, cg_residual_tol=1e-10,
-            shrunk=True, lanczos_iters=20, batch_size=200, decay=False, ascend=False, assume_locally_linear=False):
+    def __init__(self,
+                 params,
+                 lr=required,
+                 cg_iters=10,
+                 cg_residual_tol=1e-10,
+                 shrunk=False,
+                 lanczos_iters=20,
+                 batch_size=200,
+                 ascend=False, 
+                 assume_locally_linear=False):
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
 
@@ -29,7 +37,6 @@ class NaturalAdagrad(Optimizer):
                         shrunk=shrunk,
                         lanczos_iters=lanczos_iters,
                         batch_size=batch_size,
-                        decay=decay,
                         ascend=ascend,
                         assume_locally_linear=assume_locally_linear)
         if cg_iters <= 0:
@@ -60,6 +67,20 @@ class NaturalAdagrad(Optimizer):
         if self._numel_cache is None:
             self._numel_cache = reduce(lambda total, p: total + p.numel(), self._params, 0)
         return self._numel_cache
+
+    def _make_combined_gnvp_fun(self, closure, theta, theta_old, bias_correction2=1.0):
+        step = self.state['step']
+        c1, z1, tmp_params1 = closure(theta_old)
+        c2, z2, tmp_params2 = closure(theta)
+        def f(v):
+            hessp_beta1 = GNvp(c1, z1, tmp_params1, v)
+            hessp_beta2 = GNvp(c2, z2, tmp_params2, v)
+            if step >= 1:
+                weighted_hessp = ((step - 1) * hessp_beta1 + hessp_beta2) / step
+            else:
+                weighted_hessp = hessp_beta2
+            return weighted_hessp.data / bias_correction2
+        return f
 
     def _make_combined_fvp_fun(self, closure, theta, theta_old, bias_correction2=1.0):
         step = self.state['step']
@@ -106,14 +127,19 @@ class NaturalAdagrad(Optimizer):
             theta_old = ((state['step'] - 1) * theta_old + theta) / state['step']
         else:
             # Do linesearch first to update theta_old. Then can do CG with only one HVP at each itr.
-            weighted_fvp_fn = self._make_combined_fvp_fun(closure, self._params, self._params_old)
-            f = make_fvp_obj_fun(closure, weighted_fvp_fn, self.state['ng_prior'].clone())
+            # weighted_fvp_fn = self._make_combined_fvp_fun(closure, self._params, self._params_old)
+            # f = make_fvp_obj_fun(closure, weighted_fvp_fn, self.state['ng_prior'].clone())
+
+            weighted_fvp_fn = self._make_combined_gnvp_fun(closure, self._params, self._params_old)
+            f = make_gnvp_obj_fun(closure, weighted_fvp_fn, self.state['ng_prior'].clone())
+
             xmin, fmin, alpha = randomized_linesearch(f, theta_old.data, theta.data)
             theta_old = Variable(xmin.float())
         vector_to_parameters(theta_old, self._params_old)
 
         # Now that theta_old has been updated, do CG with only theta old
-        fvp_fn_average = make_fvp_fun(closure, self._params_old)
+        # fvp_fn_average = make_fvp_fun(closure, self._params_old)
+        fvp_fn_average = make_gnvp_fun(closure, self._params_old)
 
         rho, diag_shrunk = 0.0, 1.0
         if self._param_group['shrunk']:
@@ -130,13 +156,8 @@ class NaturalAdagrad(Optimizer):
 
         self.state['ng_prior'] = ng.data.clone()
 
-        # Decay LR
-        if self._param_group['decay']:
-            lr = self._param_group['lr'] / np.sqrt(state['step'])
-        else:
-            lr = self._param_group['lr']
-
         # Normalize NG
+        lr = self._param_group['lr']
         alpha = torch.sqrt(torch.abs(lr / (torch.dot(g, ng) + 1e-20)))
 
         # Unflatten grad

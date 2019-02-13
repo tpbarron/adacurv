@@ -24,7 +24,6 @@ def lanczos_iteration_scipy(Fvp_fn, params, k=20):
         w = arpack.eigenvalues
     return w
 
-
 def lanczos_iteration(Fvp_fn, params, k=20):
     theta = parameters_to_vector(params)
     n_params = len(theta)
@@ -56,18 +55,16 @@ def lanczos_iteration(Fvp_fn, params, k=20):
     from scipy.linalg import eigvalsh_tridiagonal
     w = eigvalsh_tridiagonal(np.array(diag), np.array(diag_adj))
     return w
-    # # rho, d = estimate_shrinkage(w)
-    # # input("")
-    #
-    # return np.array(diag), np.array(diag_adj)
-
 
 def estimate_shrinkage(eigvals, p, batch_size):
+    # p = len(eigvals)
     # Tr(s) = Sum(\lambda_i)
     trS = np.sum(eigvals)
+    # print ("trS: ", trS)
 
     # Tr^2(S) - computed knowing that Tr(s) = Sum(eigvals(S))
     tr2S = trS**2.0
+    # print ("tr2S: ", tr2S)
 
     # TODO: optimize this.
     coef = 0.0
@@ -75,7 +72,10 @@ def estimate_shrinkage(eigvals, p, batch_size):
         for i in range(j):
             coef += eigvals[j] * eigvals[i]
     trS2 = tr2S - 2.0 * coef
+    # print ("trS2: ", trS2)
 
+    # print ("numer: ", ((1.0 - 2.0 / p) * trS2 + tr2S))
+    # print ("denom: ", ((batch_size + 1 - 2.0 / p) * (trS2 - tr2S / p)) )
     rho = min(((1.0 - 2.0 / p) * trS2 + tr2S) / ((batch_size + 1 - 2.0 / p) * (trS2 - tr2S / p)), 1.0)
     diag_shrunk = trS / p
 
