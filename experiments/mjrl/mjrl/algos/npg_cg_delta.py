@@ -1,14 +1,16 @@
+import copy
+import time as timer
 import logging
 logging.disable(logging.CRITICAL)
+
 import numpy as np
 import scipy as sp
 import scipy.sparse.linalg as spLA
-import copy
-import time as timer
+
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-import copy
+from torch.nn.utils import vector_to_parameters, parameters_to_vector
 
 # samplers
 import mjrl.samplers.trajectory_sampler as trajectory_sampler
@@ -56,6 +58,25 @@ class NPG(BatchREINFORCE):
         self.running_score = None
         self.n_steps = 0
         if save_logs: self.logger = DataLog()
+
+
+    def policy_kl_fn(self, policy, obs, act):
+        old_dist_info = policy.old_dist_info(obs, act)
+        new_dist_info = policy.new_dist_info(obs, act)
+        mean_kl = policy.mean_kl(new_dist_info, old_dist_info)
+        return mean_kl
+
+    def kl_closure(self, policy, observations, actions, kl_fn):
+        def func(params):
+            old_params = policy.get_param_values()
+            params = parameters_to_vector(params).data.numpy()
+            policy.set_param_values(params, set_new=True, set_old=True)
+            f = kl_fn(policy, observations, actions)
+
+            tmp_params = policy.trainable_params
+            policy.set_param_values(old_params, set_new=True, set_old=True)
+            return f, tmp_params
+        return func
 
     def HVP(self, policy, observations, actions, vec, regu_coef=None):
         regu_coef = self.FIM_invert_args['damping'] if regu_coef is None else regu_coef
@@ -121,14 +142,12 @@ class NPG(BatchREINFORCE):
 
         self.optim.zero_grad()
 
-        # Optimization
-        vpg_grad = self.flat_vpg(observations, actions, advantages)
+        # Optimization. Negate gradient since the optimizer is minimizing.
+        vpg_grad = -self.flat_vpg(observations, actions, advantages)
         vector_to_gradients(Variable(torch.from_numpy(vpg_grad).float()), self.policy.trainable_params)
 
-        # create HVP func to pass to NGD opt
-        hvp_fn = self.build_Hvp_eval(self.policy, [observations, actions],
-                          regu_coef=0.0) #self.FIM_invert_args['damping'])
-        info = self.optim.step(hvp_fn)
+        closure = self.kl_closure(self.policy, observations, actions, self.policy_kl_fn)
+        info = self.optim.step(closure)
         self.policy.set_param_values(self.policy.get_param_values())
 
         # Log information

@@ -51,6 +51,26 @@ def loss_closure(model, inputs, targets, loss_fn):
         return f, z, tmp_params
     return func
 
+def loss_closure_idx(model, inputs, targets, loss_fn):
+    """
+    Use me for block diagonal optimization.
+    """
+    def func(params, params_i, params_j):
+        old_params = list(model.parameters()) #parameters_to_vector(model.parameters())
+
+        cur_params = [v.clone() for v in old_params]
+        cur_params[params_i:params_j] = params
+        vector_to_parameters(parameters_to_vector(cur_params), model.parameters())
+
+        outputs, z = model(inputs, return_z=True)
+        f = loss_fn(outputs, targets)
+
+        tmp_params = list(model.parameters())[params_i:params_j]
+        vector_to_parameters(parameters_to_vector(old_params), model.parameters())
+
+        return f, z, tmp_params
+    return func
+
 ###
 # R-op implemented as two L-ops
 # See: https://j-towns.github.io/2017/06/12/A-new-trick.html

@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from torch.nn.utils import parameters_to_vector
 
+from scipy.linalg import eigvalsh_tridiagonal
 from scipy.sparse.linalg import LinearOperator
 from scipy.sparse.linalg import eigsh
 
@@ -24,11 +25,8 @@ def lanczos_iteration_scipy(Fvp_fn, params, k=20):
         w = arpack.eigenvalues
     return w
 
-def lanczos_iteration(Fvp_fn, params, k=20):
-    theta = parameters_to_vector(params)
-    n_params = len(theta)
-
-    v = torch.FloatTensor(n_params).uniform_()
+def lanczos_iteration(Fvp_fn, dim, k=20):
+    v = torch.FloatTensor(dim).uniform_()
     v /= torch.norm(v, 2)
 
     diag = []
@@ -52,7 +50,6 @@ def lanczos_iteration(Fvp_fn, params, k=20):
         w = w - alpha * v - beta * v_prev
 
     diag, diag_adj = np.array(diag), np.array(diag_adj)
-    from scipy.linalg import eigvalsh_tridiagonal
     w = eigvalsh_tridiagonal(np.array(diag), np.array(diag_adj))
     return w
 

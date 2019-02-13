@@ -44,6 +44,13 @@ def make_gnvp_fun(closure, theta, bias_correction2=1.0):
         return hessp.data / bias_correction2
     return f
 
+def make_gnvp_fun_idx(closure, theta, params_i, params_j, bias_correction2=1.0):
+    c, z, params = closure(theta, params_i, params_j)
+    def f(v):
+        hessp = GNvp(c, z, params, v)
+        return hessp.data / bias_correction2
+    return f
+
 def make_fvp_obj_fun(closure, weighted_fvp_fn, ng):
     v2 = weighted_fvp_fn(ng)
     def f(p):

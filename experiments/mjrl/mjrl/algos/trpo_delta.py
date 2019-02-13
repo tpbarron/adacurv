@@ -85,6 +85,8 @@ class TRPO(NPG):
 
         # Optimization algorithm
         # --------------------------
+        self.optim.zero_grad()
+
         surr_before = self.CPI_surrogate(observations, actions, advantages).data.numpy().ravel()[0]
 
         # VPG
@@ -94,23 +96,17 @@ class TRPO(NPG):
         t_gLL += timer.time() - ts
 
         # NPG
-        # ts = timer.time()
-        # hvp = self.build_Hvp_eval([observations, actions],
-        #                           regu_coef=self.FIM_invert_args['damping'])
-        # npg_grad = cg_solve(hvp, vpg_grad, x_0=vpg_grad.copy(),
-        #                     cg_iters=self.FIM_invert_args['iters'])
-        # t_FIM += timer.time() - ts
-
+        # Note: unlike the standard NPG, negation is not needed here since the optimizer does not
+        # apply the update step.
         ts = timer.time()
-        # create HVP func to pass to NGD opt
-        hvp_fn = self.build_Hvp_eval(self.policy, [observations, actions])
-        info = self.optim.step(hvp_fn, execute_update=False)
+        closure = self.kl_closure(self.policy, observations, actions, self.policy_kl_fn)
+        info = self.optim.step(closure, execute_update=False)
         npg_grad = info['natural_grad'].data.numpy()
         t_FIM += timer.time() - ts
 
         # Step size computation
         # --------------------------
-        n_step_size = 2.0*self.kl_dist
+        n_step_size = 2.0 * self.kl_dist
         alpha = np.sqrt(np.abs(n_step_size / (np.dot(vpg_grad.T, npg_grad) + 1e-20)))
 
         # Policy update

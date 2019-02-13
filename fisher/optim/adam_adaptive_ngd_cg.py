@@ -35,7 +35,6 @@ class NaturalAdam(Optimizer):
                  lanczos_amortization=10,
                  lanczos_iters=20,
                  batch_size=200,
-                 ascend=False,
                  assume_locally_linear=False):
 
         if lr is not required and lr < 0.0:
@@ -58,7 +57,6 @@ class NaturalAdam(Optimizer):
                         lanczos_amortization=lanczos_amortization,
                         lanczos_iters=lanczos_iters,
                         batch_size=batch_size,
-                        ascend=ascend,
                         assume_locally_linear=assume_locally_linear)
         if cg_iters <= 0:
             raise ValueError("CG iters must be > 0")
@@ -236,10 +234,6 @@ class NaturalAdam(Optimizer):
 
         # Unflatten grad
         vector_to_gradients(ng, self._params)
-
-        # If doing gradient ascent, reverse direction
-        if self._param_group['ascend']:
-            alpha *= -1.0
 
         if execute_update:
             # Apply step

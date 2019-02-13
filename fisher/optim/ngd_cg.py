@@ -70,8 +70,7 @@ class NGD(Optimizer):
                  shrinkage_method=None,
                  lanczos_amortization=10,
                  lanczos_iters=20,
-                 batch_size=200,
-                 ascend=False):
+                 batch_size=200):
         """
         Create a Truncated CG optimizer.
 
@@ -117,8 +116,7 @@ class NGD(Optimizer):
                         shrinkage_method=shrinkage_method,
                         lanczos_amortization=lanczos_amortization,
                         lanczos_iters=lanczos_iters,
-                        batch_size=batch_size,
-                        ascend=ascend)
+                        batch_size=batch_size)
         if cg_iters <= 0:
             raise ValueError("CG iters must be > 0")
         if cg_residual_tol < 0:
@@ -222,10 +220,6 @@ class NGD(Optimizer):
 
         # Unflatten grad
         vector_to_gradients(ng, self._params)
-
-        # If doing gradient ascent, reverse direction
-        if self._param_group['ascend']:
-            alpha *= -1
 
         if execute_update:
             # Apply step

@@ -100,7 +100,7 @@ class TRPO(NPG):
 
         # Step size computation
         # --------------------------
-        n_step_size = 2.0*self.kl_dist
+        n_step_size = 2.0 * self.kl_dist
         alpha = np.sqrt(np.abs(n_step_size / (np.dot(vpg_grad.T, npg_grad) + 1e-20)))
 
         # Policy update

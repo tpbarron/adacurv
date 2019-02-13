@@ -69,17 +69,15 @@ def launch_job(tag, variant):
                                      decay=decay,
                                      shrunk=shrunk,
                                      lanczos_iters=lanczos_iters,
-                                     batch_size=batch_size,
-                                     ascend=True)
+                                     batch_size=batch_size)
     elif optim == 'natural_adam':
         optimizer = fisher_optim.NaturalAdam(policy.trainable_params,
                                              betas=betas,
                                              lr=lr,
-                                             decay=decay,
-                                             shrunk=shrunk,
+                                             curv_type='fisher',
+                                             shrinkage_method=None,
                                              lanczos_iters=lanczos_iters,
                                              batch_size=batch_size,
-                                             ascend=True,
                                              assume_locally_linear=approx_adaptive)
     elif optim == 'natural_adagrad':
         optimizer = fisher_optim.NaturalAdagrad(policy.trainable_params,
@@ -88,7 +86,6 @@ def launch_job(tag, variant):
                                                 shrunk=shrunk,
                                                 lanczos_iters=lanczos_iters,
                                                 batch_size=batch_size,
-                                                ascend=True,
                                                 assume_locally_linear=approx_adaptive)
     elif optim == 'natural_amsgrad':
         optimizer = fisher_optim.NaturalAmsgrad(policy.trainable_params,
@@ -98,7 +95,6 @@ def launch_job(tag, variant):
                                                 shrunk=shrunk,
                                                 lanczos_iters=lanczos_iters,
                                                 batch_size=batch_size,
-                                                ascend=True,
                                                 assume_locally_linear=approx_adaptive)
 
     if algo == 'trpo':
@@ -157,7 +153,13 @@ if __name__ == "__main__":
     # tag = 'bball_hoop1.5_torqctrl'
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 500000]
 
-    tag = 'bball_hoop1.5_velctrl_botharms_angle55'
+    # tag = 'bball_hoop1.5_velctrl_botharms_angle55'
     #variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
-    variant = [1, 'BasketballEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
+    # variant = [1, 'BasketballEnv-v0', 'npg', 'natural_adam', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
+
+
+    tag = 'test'
+    variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.0, False, (0.1, 0.1), True, 1000000]
+    # variant = [1, 'Walker2DBulletEnv-v0', 'npg', 'natural_adam', False, 0, 5000, 0.05, False, (0.1, 0.1), True, 1000000]
+
     launch_job(tag, variant)
