@@ -13,7 +13,7 @@ import numpy as np
 #import matplotlib.pyplot as plt
 
 from torch.optim.lr_scheduler import LambdaLR
-from fisher.optim.hvp_utils import kl_closure, loss_closure, build_Fvp, mean_kl_multinomial
+from fisher.optim.hvp_utils import kl_closure, loss_closure, mean_kl_multinomial
 
 
 class Net(nn.Module):
@@ -65,8 +65,8 @@ def train(args, model, device, train_loader, test_loader, optimizer, epoch, data
         if args.optim not in ["sgd", "adam", "rmsprop", "amsgrad", "adagrad"]:
             # Fvp_fn = build_Fvp(model, data, target, mean_kl_multinomial)
             # optimizer.step(Fvp_fn)
-            closure = kl_closure(model, data, target, mean_kl_multinomial)
-            # closure = loss_closure(model, data, target, F.nll_loss)
+            # closure = kl_closure(model, data, target, mean_kl_multinomial)
+            closure = loss_closure(model, data, target, F.nll_loss)
             optimizer.step(closure)
         else:
             optimizer.step()
@@ -182,13 +182,15 @@ def launch_job(args):
         if args.optim == 'ngd':
             optimizer = fisher_optim.NGD(model.parameters(),
                                          lr=args.lr,
-                                         shrunk=args.shrunk,
+                                         curv_type='gauss_newton',
+                                         shrinkage_method=None,
                                          lanczos_iters=args.lanczos_iters,
                                          batch_size=args.batch_size)
         elif args.optim == 'natural_adam':
             optimizer = fisher_optim.NaturalAdam(model.parameters(),
                                                  lr=args.lr,
-                                                 shrunk=args.shrunk,
+                                                 curv_type='gauss_newton',
+                                                 shrinkage_method='cg',
                                                  lanczos_iters=args.lanczos_iters,
                                                  batch_size=args.batch_size,
                                                  betas=(args.beta1, args.beta2),
@@ -196,7 +198,8 @@ def launch_job(args):
         elif args.optim == 'natural_amsgrad':
             optimizer = fisher_optim.NaturalAmsgrad(model.parameters(),
                                                     lr=args.lr,
-                                                    shrunk=args.shrunk,
+                                                    curv_type='gauss_newton',
+                                                    shrinkage_method='cg',
                                                     lanczos_iters=args.lanczos_iters,
                                                     batch_size=args.batch_size,
                                                     betas=(args.beta1, args.beta2),
@@ -204,7 +207,8 @@ def launch_job(args):
         elif args.optim == 'natural_adagrad':
             optimizer = fisher_optim.NaturalAdagrad(model.parameters(),
                                                     lr=args.lr,
-                                                    shrunk=args.shrunk,
+                                                    curv_type='gauss_newton',
+                                                    shrinkage_method='cg',
                                                     lanczos_iters=args.lanczos_iters,
                                                     batch_size=args.batch_size,
                                                     assume_locally_linear=args.approx_adaptive)

@@ -177,7 +177,6 @@ class NGD(Optimizer):
         elif curv_type == 'gauss_newton':
             Fvp_theta_fn = make_gnvp_fun(closure, self._params)
 
-        # Do CG solve with hvp fn closure
         shrinkage_method = self._param_group['shrinkage_method']
         lanczos_amortization = self._param_group['lanczos_amortization']
         if shrinkage_method == 'lanczos' and (state['step']-1) % lanczos_amortization == 0:
@@ -189,9 +188,10 @@ class NGD(Optimizer):
 
         M = None
         if self._param_group['cg_precondition_empirical']:
-            # Emp fisher is g * g
+            # Empirical Fisher is g * g
             M = (g * g + self._param_group['cg_precondition_regu_coef'] * torch.ones_like(g)) ** self._param_group['cg_precondition_exp']
 
+        # Do CG solve with hvp fn closure
         extract_tridiag = self._param_group['shrinkage_method'] == 'cg'
         cg_result = cg_solve(Fvp_theta_fn,
                       g.data.clone(),

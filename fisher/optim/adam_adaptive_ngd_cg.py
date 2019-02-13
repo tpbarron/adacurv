@@ -158,7 +158,7 @@ class NaturalAdam(Optimizer):
         theta_old = parameters_to_vector(self._params_old)
 
         if 'ng_prior' not in state:
-            state['ng_prior'] = torch.zeros_like(g_hat) #g_hat.data.clone()
+            state['ng_prior'] = torch.zeros_like(g_hat)
 
         curv_type = self._param_group['curv_type']
         if curv_type not in self.valid_curv_types:
@@ -178,7 +178,6 @@ class NaturalAdam(Optimizer):
                 f = make_gnvp_obj_fun(closure, weighted_fvp_fn, ng)
             xmin, fmin, alpha = randomized_linesearch(f, theta_old.data, theta.data)
             theta_old = Variable(xmin.float())
-
         vector_to_parameters(theta_old, self._params_old)
 
         # Now that theta_old has been updated, do CG with only theta old
@@ -201,9 +200,8 @@ class NaturalAdam(Optimizer):
             state['diag_shrunk'] = diag_shrunk
 
         M = None
-        # TODO: make this adaptive emp fisher
         if self._param_group['cg_precondition_empirical']:
-            # Emp fisher is g * g
+            # Empirical Fisher is g * g
             Mt = (g * g + self._param_group['cg_precondition_regu_coef'] * torch.ones_like(g)) ** self._param_group['cg_precondition_exp']
             V.mul_(beta2).add_(1 - beta2, Mt)
             M = V / bias_correction2
