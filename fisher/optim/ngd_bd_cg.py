@@ -331,7 +331,7 @@ class NGD_BD(Optimizer):
                 # print ("Computing CG shrinkage at step ", state['step'])
                 ng, (diag_elems, off_diag_elems) = cg_result
                 w = eigvalsh_tridiagonal(diag_elems, off_diag_elems)
-                rho, diag_shrunk = estimate_shrinkage(w, self._numel(), group['batch_size'])
+                rho, diag_shrunk = estimate_shrinkage(w, num_params, group['batch_size'])
                 state['rho'] = rho
                 state['diag_shrunk'] = diag_shrunk
             else:

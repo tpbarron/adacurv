@@ -132,7 +132,6 @@ class NaturalAdagrad(Optimizer):
             state['rho'] = 0.0
             state['diag_shrunk'] = 1.0
 
-        V = state['M']
         state['step'] += 1
 
         # Get flat grad
@@ -182,6 +181,7 @@ class NaturalAdagrad(Optimizer):
         M = None
         if self._param_group['cg_precondition_empirical']:
             # Empirical Fisher is g * g
+            V = state['M']
             Mt = (g * g + self._param_group['cg_precondition_regu_coef'] * torch.ones_like(g)) ** self._param_group['cg_precondition_exp']
             V = ((state['step'] - 1) * V + Mt) / state['step']
             M = V

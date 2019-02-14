@@ -138,7 +138,6 @@ class NaturalAdam(Optimizer):
             state['diag_shrunk'] = 1.0
 
         m = state['m']
-        V = state['M']
         beta1, beta2 = self._param_group['betas']
         state['step'] += 1
 
@@ -200,6 +199,7 @@ class NaturalAdam(Optimizer):
         M = None
         if self._param_group['cg_precondition_empirical']:
             # Empirical Fisher is g * g
+            V = state['M']
             Mt = (g * g + self._param_group['cg_precondition_regu_coef'] * torch.ones_like(g)) ** self._param_group['cg_precondition_exp']
             V.mul_(beta2).add_(1 - beta2, Mt)
             M = V / bias_correction2
