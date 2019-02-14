@@ -25,7 +25,7 @@ Y = np.random.random((k, m))
 
 
 def loss(X, Y, R):
-    return np.linalg.norm(X.T @ Y - R)
+    return np.linalg.norm(X.T @ Y - R) #**2 + 0.01*np.linalg.norm(X)**2 + 0.01*np.linalg.norm(Y)**2
 
 lmda = 0.001
 
