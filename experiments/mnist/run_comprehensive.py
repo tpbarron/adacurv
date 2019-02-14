@@ -4,14 +4,14 @@ from itertools import product, chain
 import ray
 import mnist
 
-ray.init()
+ray.init(num_cpus=4)
 
 
 ###
 # Common params
 ###
 
-seeds = list(range(5))
+seeds = list(range(1))
 global_lrs = [0.001]
 batch_sizes = [125, 250, 500, 1000]
 decay = True
@@ -36,11 +36,11 @@ def run_variants(variants):
     gets = []
 
     for variant in variants:
-        seed, optim, shrunk, k, bs, lr, approx_adap, bts = variant
+        seed, optim, curv_type, lr, bs, cg_iters, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp, shrinkage_method, lanczos_amortization, lanczos_iters, bts, approx_adaptive = variant
 
         args = arguments.get_args()
         args.optim = optim
-        args.curv_type = NONE
+        args.curv_type = curv_type
         args.lr = lr
         args.decay_lr = decay
         args.epochs = epochs
@@ -53,7 +53,7 @@ def run_variants(variants):
         args.cg_precondition_exp = cg_precondition_exp
 
         args.shrinkage_method = shrinkage_method
-        args.lanczos_amortization = lanzcos_amortization
+        args.lanczos_amortization = lanczos_amortization
         args.lanczos_iters = lanczos_iters
 
         args.beta1 = bts[0]
