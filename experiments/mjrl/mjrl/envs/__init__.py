@@ -27,6 +27,19 @@ register(
     entry_point='bbbot.basketball_env:BasketballEnvRendered',
     max_episode_steps=250,
 )
+
+register(
+    id='BasketballEnvHard-v0',
+    entry_point='bbbot.basketball_env_hard:BasketballEnvHard',
+    max_episode_steps=250,
+)
+
+register(
+    id='BasketballEnvHardRendered-v0',
+    entry_point='bbbot.basketball_env_hard:BasketballEnvHardRendered',
+    max_episode_steps=250,
+)
+
 # from mjrl.envs.mujoco_env import MujocoEnv
 # ^^^^^ so that user gets the correct error
 # message if mujoco is not installed correctly
