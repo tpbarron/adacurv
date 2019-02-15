@@ -179,7 +179,7 @@ class NGD(Optimizer):
         lanczos_amortization = self._param_group['lanczos_amortization']
         if shrinkage_method == 'lanczos' and (state['step']-1) % lanczos_amortization == 0:
             # print ("Computing Lanczos shrinkage at step ", state['step'])
-            w = lanczos_iteration(Fvp_theta_fn, self._params, k=self._param_group['lanczos_iters'])
+            w = lanczos_iteration(Fvp_theta_fn, self._numel(), k=self._param_group['lanczos_iters'])
             rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
             state['rho'] = rho
             state['diag_shrunk'] = diag_shrunk

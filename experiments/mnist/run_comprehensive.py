@@ -87,7 +87,7 @@ all_variants = []
 if baselines:
     tag = 'baselines'
     lrs = [0.01, 0.005, 0.001]
-    variants1 = product([tag]
+    variants1 = product([tag],
                         seeds,
                         ['sgd', 'adam', 'amsgrad', 'adagrad'],      # optim
                         [''],                                       # curv_type
@@ -300,6 +300,6 @@ if gauss_newton_all:
     print (len(variants1))
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
-print (len(all_variants))
+print ("Total:", len(all_variants))
 input("Continue?")
 run_variants(all_variants)

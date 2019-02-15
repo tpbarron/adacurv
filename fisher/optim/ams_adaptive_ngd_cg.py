@@ -177,7 +177,7 @@ class NaturalAmsgrad(Optimizer):
                                                                     self._params_old,
                                                                     bias_correction2=bias_correction2)
 
-        fisher_norm = lanczos_iteration(weighted_fvp_fn_div_beta2, self._params, k=1)[0]
+        fisher_norm = lanczos_iteration(weighted_fvp_fn_div_beta2, self._numel(), k=1)[0]
         is_max_norm = fisher_norm > state['max_fisher_spectral_norm'] or state['step'] == 1
         if is_max_norm:
             state['max_fisher_spectral_norm'] = fisher_norm
@@ -214,7 +214,7 @@ class NaturalAmsgrad(Optimizer):
         lanczos_amortization = self._param_group['lanczos_amortization']
         if shrinkage_method == 'lanczos' and (state['step']-1) % lanczos_amortization == 0:
             # print ("Computing Lanczos shrinkage at step ", state['step'])
-            w = lanczos_iteration(fvp_fn_div_beta2, self._params, k=self._param_group['lanczos_iters'])
+            w = lanczos_iteration(fvp_fn_div_beta2, self._numel(), k=self._param_group['lanczos_iters'])
             rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
             state['rho'] = rho
             state['diag_shrunk'] = diag_shrunk
