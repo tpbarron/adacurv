@@ -4,8 +4,16 @@ from itertools import product, chain
 import ray
 import mnist
 
-ray.init(num_cpus=4)
+ray.init(num_cpus=10)
 
+baselines = False
+basic_fisher = True
+basic_gauss_newton = True
+fisher_shrunk = True
+fisher_precondition = True
+fisher_momentum = True
+fisher_all = True
+gauss_newton_all = True
 
 ###
 # Common params
@@ -36,7 +44,7 @@ def run_variants(variants):
     gets = []
 
     for variant in variants:
-        seed, optim, curv_type, lr, bs, cg_iters, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp, shrinkage_method, lanczos_amortization, lanczos_iters, bts, approx_adaptive = variant
+        tag, seed, optim, curv_type, lr, bs, cg_iters, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp, shrinkage_method, lanczos_amortization, lanczos_iters, bts, approx_adaptive = variant
 
         args = arguments.get_args()
         args.optim = optim
@@ -69,90 +77,229 @@ def run_variants(variants):
 
     ray.get([pid for pid in gets])
 
+
+all_variants = []
+
 ###
 # Run baselines only once
 ###
 
-tag = 'baselines'
-lrs = [0.1, 0.05, 0.001]
-variants1 = product(seeds,
-                    ['sgd', 'adam', 'amsgrad', 'adagrad'],      # optim
-                    [''],                                       # curv_type
-                    lrs,                                        # lr
-                    batch_sizes,                                # batch size
-                    [10],                                       # cg_iters
-                    [0.0],                                      # cg_prev_init_coef
-                    [False],                                    # cg_precondition_empirical
-                    [0.0],                                      # cg_precondition_regu_coef
-                    [0.0],                                      # cg_precondition_exp
-                    [None],                                     # shrinkage_method
-                    [0],                                        # lanzcos_amortization
-                    [0],                                        # lanzcos_iters
-                    [(0.0, 0.0)],                               # betas (ignored for these optimizers)
-                    [False])                                    # approx adaptive
+if baselines:
+    tag = 'baselines'
+    lrs = [0.01, 0.005, 0.001]
+    variants1 = product([tag]
+                        seeds,
+                        ['sgd', 'adam', 'amsgrad', 'adagrad'],      # optim
+                        [''],                                       # curv_type
+                        lrs,                                        # lr
+                        batch_sizes,                                # batch size
+                        [10],                                       # cg_iters
+                        [0.0],                                      # cg_prev_init_coef
+                        [False],                                    # cg_precondition_empirical
+                        [0.0],                                      # cg_precondition_regu_coef
+                        [0.0],                                      # cg_precondition_exp
+                        [None],                                     # shrinkage_method
+                        [0],                                        # lanzcos_amortization
+                        [0],                                        # lanzcos_iters
+                        [(0.0, 0.0)],                               # betas (ignored for these optimizers)
+                        [False])                                    # approx adaptive
 
-variants1 = copy.deepcopy(list(variants1))
-print (variants1)
-print (len(variants1))
-input("Continue?")
-run_variants(variants1)
+    variants1 = copy.deepcopy(list(variants1))
+    print (len(variants1))
+    # print (variants1)
+    # input("Continue?")
+    # run_variants(variants1)
+    all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
 
 ###
 # Run all basic with no preconditioner, no momentum, no amortization, to ensure code not broken
 ###
 
+if basic_fisher:
+    tag = 'basic_fisher'
+    variants1 = product([tag],
+                        seeds,
+                        ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
+                        ['fisher'],                                                             # curv_type
+                        global_lrs,                                                             # lr
+                        batch_sizes,                                                            # batch size
+                        [10],                                                                   # cg_iters
+                        [0.0],                                                                  # cg_prev_init_coef
+                        [False],                                                                # cg_precondition_empirical
+                        [0.0],                                                                  # cg_precondition_regu_coef
+                        [0.0],                                                                  # cg_precondition_exp
+                        [None],                                                                 # shrinkage_method
+                        [0],                                                                    # lanzcos_amortization
+                        [0],                                                                    # lanzcos_iters
+                        [(0.1, 0.1)],                                                           # betas
+                        [False])                                                                # approx adaptive
+
+
+    variants1 = list(variants1)
+    print (len(variants1))
+    all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
+
 ###
 # Run only changing to gauss_newton to observe if significant difference
 ###
+
+if basic_gauss_newton:
+    tag = 'basic_gauss_newton'
+    variants1 = product([tag],
+                        seeds,
+                        ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
+                        ['gauss_newton'],                                                       # curv_type
+                        global_lrs,                                                             # lr
+                        batch_sizes,                                                            # batch size
+                        [10],                                                                   # cg_iters
+                        [0.0],                                                                  # cg_prev_init_coef
+                        [False],                                                                # cg_precondition_empirical
+                        [0.0],                                                                  # cg_precondition_regu_coef
+                        [0.0],                                                                  # cg_precondition_exp
+                        [None],                                                                 # shrinkage_method
+                        [0],                                                                    # lanzcos_amortization
+                        [0],                                                                    # lanzcos_iters
+                        [(0.1, 0.1)],                                                           # betas
+                        [False])                                                                # approx adaptive
+
+    variants1 = list(variants1)
+    print (len(variants1))
+    all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
 ###
 # Test change in shrinkage
 ###
 
+if fisher_shrunk:
+    tag = 'fisher_shrunk'
+    variants1 = product([tag],
+                        seeds,
+                        ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
+                        ['fisher'],                                                             # curv_type
+                        global_lrs,                                                             # lr
+                        batch_sizes,                                                            # batch size
+                        [10],                                                                   # cg_iters
+                        [0.0],                                                                  # cg_prev_init_coef
+                        [False],                                                                # cg_precondition_empirical
+                        [0.0],                                                                  # cg_precondition_regu_coef
+                        [0.0],                                                                  # cg_precondition_exp
+                        ['lanzcos', 'cg'],                                                      # shrinkage_method
+                        [1],                                                                    # lanzcos_amortization
+                        [10],                                                                   # lanzcos_iters
+                        [(0.1, 0.1)],                                                           # betas
+                        [False])                                                                # approx adaptive
+
+    variants1 = list(variants1)
+    print (len(variants1))
+    all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
+
 ###
 # Test preconditioner
 ###
+
+if fisher_precondition:
+    tag = 'fisher_precondition'
+    variants1 = product([tag],
+                        seeds,
+                        ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
+                        ['fisher'],                                                             # curv_type
+                        global_lrs,                                                             # lr
+                        batch_sizes,                                                            # batch size
+                        [10],                                                                   # cg_iters
+                        [0.0],                                                                  # cg_prev_init_coef
+                        [True],                                                                 # cg_precondition_empirical
+                        [0.001],                                                                # cg_precondition_regu_coef
+                        [0.75],                                                                 # cg_precondition_exp
+                        [None],                                                                 # shrinkage_method
+                        [0],                                                                    # lanzcos_amortization
+                        [0],                                                                    # lanzcos_iters
+                        [(0.1, 0.1)],                                                           # betas
+                        [False])                                                                # approx adaptive
+
+    variants1 = list(variants1)
+    print (len(variants1))
+    all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
 ###
 # Test momentum
 ###
 
-# tag = 'mnist_basic'
-#
-# seeds = list(range(5))
-# algos1 = ['ngd', 'natural_adagrad']
-# algos2 = ['natural_adam', 'natural_amsgrad']
-# shrunk_ks = [10]
-# batch_sizes = [125, 250, 500, 1000]
-# betas = [(0.1, 0.1)]
-# lrs = [0.001]
-# decay = True
-# verbose = False
-# epochs = 10
-#
-# # seed x optim x shrunk(bool), lanczos k x batch size x lr x approx adaptive x betas
-# variants1 = product(seeds, ['sgd', 'adam', 'amsgrad', 'adagrad'], [False], [0], batch_sizes, lrs, [False], [(0.0, 0.0)])
-# # ngd versions without shrinkage, (both approx and optimal)
-# approx_adaptive = [True, False]
-# variants2a = product(seeds, ['ngd'], [False], shrunk_ks, batch_sizes, lrs, [False], betas)
-# variants2b = product(seeds, ['natural_adagrad'], [False], shrunk_ks, batch_sizes, lrs, approx_adaptive, betas)
-# variants2c = product(seeds, algos2, [False], shrunk_ks, [125], [0.0001], approx_adaptive, betas)
-# variants2d = product(seeds, algos2, [False], shrunk_ks, [250], [0.0005], approx_adaptive, betas)
-# variants2e = product(seeds, algos2, [False], shrunk_ks, [500], [0.001], approx_adaptive, betas)
-# variants2f = product(seeds, algos2, [False], shrunk_ks, [1000], [0.001], approx_adaptive, betas)
-# variants2 = list(chain(variants2a, variants2b, variants2c, variants2d, variants2e, variants2f))
-#
-# approx_adaptive = [False]
-# # ngd versions with shrinkage (only optimal)
-# variants3a = product(seeds, algos1, [True], shrunk_ks, batch_sizes, lrs, approx_adaptive, betas)
-# variants3b = product(seeds, algos2, [True], shrunk_ks, [125], [0.0001], approx_adaptive, betas)
-# variants3c = product(seeds, algos2, [True], shrunk_ks, [250], [0.0005], approx_adaptive, betas)
-# variants3d = product(seeds, algos2, [True], shrunk_ks, [500], [0.001], approx_adaptive, betas)
-# variants3 = list(chain(variants3a, variants3b, variants3c, variants3d))
-#
-# all_variants = copy.deepcopy(list(chain(variants1, variants2, variants3)))
-#
-# print (list(all_variants))
-# print (len(list(all_variants)))
-# input("Continue?")
+if fisher_momentum:
+    tag = 'fisher_momentum'
+    variants1 = product([tag],
+                        seeds,
+                        ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
+                        ['fisher'],                                                             # curv_type
+                        global_lrs,                                                             # lr
+                        batch_sizes,                                                            # batch size
+                        [10],                                                                   # cg_iters
+                        [0.5],                                                                  # cg_prev_init_coef
+                        [False],                                                                # cg_precondition_empirical
+                        [0.0],                                                                  # cg_precondition_regu_coef
+                        [0.0],                                                                  # cg_precondition_exp
+                        [None],                                                                 # shrinkage_method
+                        [0],                                                                    # lanzcos_amortization
+                        [0],                                                                    # lanzcos_iters
+                        [(0.1, 0.1)],                                                           # betas
+                        [False])                                                                # approx adaptive
+
+    variants1 = list(variants1)
+    print (len(variants1))
+    all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
+
+###
+# Fisher all
+###
+
+if fisher_all:
+    tag = 'fisher_all'
+    variants1 = product([tag],
+                        seeds,
+                        ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
+                        ['fisher'],                                                             # curv_type
+                        global_lrs,                                                             # lr
+                        batch_sizes,                                                            # batch size
+                        [10],                                                                   # cg_iters
+                        [0.5],                                                                  # cg_prev_init_coef
+                        [True],                                                                 # cg_precondition_empirical
+                        [0.001],                                                                # cg_precondition_regu_coef
+                        [0.75],                                                                 # cg_precondition_exp
+                        ['cg', 'lanzcos'],                                                      # shrinkage_method
+                        [10],                                                                   # lanzcos_amortization
+                        [10],                                                                   # lanzcos_iters
+                        [(0.1, 0.1)],                                                           # betas
+                        [False])                                                                # approx adaptive
+
+    variants1 = list(variants1)
+    print (len(variants1))
+    all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
+
+# Gauss Newton all
+
+if gauss_newton_all:
+    tag = 'gauss_newton_all'
+    variants1 = product([tag],
+                        seeds,
+                        ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
+                        ['gauss_newton'],                                                       # curv_type
+                        global_lrs,                                                             # lr
+                        batch_sizes,                                                            # batch size
+                        [10],                                                                   # cg_iters
+                        [0.5],                                                                  # cg_prev_init_coef
+                        [True],                                                                 # cg_precondition_empirical
+                        [0.001],                                                                # cg_precondition_regu_coef
+                        [0.75],                                                                 # cg_precondition_exp
+                        ['cg', 'lanczos'],                                                      # shrinkage_method
+                        [10],                                                                   # lanzcos_amortization
+                        [10],                                                                   # lanzcos_iters
+                        [(0.1, 0.1)],                                                           # betas
+                        [False])                                                                # approx adaptive
+
+    variants1 = list(variants1)
+    print (len(variants1))
+    all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
+
+print (len(all_variants))
+input("Continue?")
+run_variants(all_variants)
