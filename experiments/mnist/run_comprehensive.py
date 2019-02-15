@@ -4,7 +4,7 @@ from itertools import product, chain
 import ray
 import mnist
 
-ray.init(num_cpus=10)
+ray.init(num_cpus=16)
 
 baselines = False
 basic_fisher = True
@@ -31,10 +31,10 @@ verbose = False
 ###
 
 @ray.remote
-def run(args):
-    print ("Starting job with args: ", args)
+def run(args, i, n):
+    print ("Starting job (" + str(i) + "/" + str(n) +") with args: ", args)
     mnist.launch_job(args)
-    print ("Finished job with args: ", args)
+    print ("Finished job (" + str(i) + "/" + str(n) + ") with args: ", args)
 
 ###
 # Start a set of variants
@@ -43,6 +43,8 @@ def run(args):
 def run_variants(variants):
     gets = []
 
+    i = 1
+    n = len(variants)
     for variant in variants:
         tag, seed, optim, curv_type, lr, bs, cg_iters, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp, shrinkage_method, lanczos_amortization, lanczos_iters, bts, approx_adaptive = variant
 
@@ -72,7 +74,8 @@ def run_variants(variants):
         args.log_dir = 'results/'+str(tag)
         args.verbose = verbose
 
-        pid = run.remote(args)
+        pid = run.remote(args, i, n)
+        i += 1
         gets.append(pid)
 
     ray.get([pid for pid in gets])
