@@ -189,17 +189,31 @@ class BasketballEnv(gym.Env):
         ball_pos = np.array(ball_pos)
         hoop_pos = np.array(hoop_pos)
 
-        # print ("Ball pos: ", ball_pos)
-        # print ("Hoop pos: ", hoop_pos)
+        print ("Ball pos: ", ball_pos)
+        print ("Hoop pos: ", hoop_pos)
         dist_to_hoop = np.linalg.norm(ball_pos[0:2] - hoop_pos[0:2])
-        # print ("Dist to hoop in x-y plane: ", dist_to_hoop, ball_radius, hoop_radius)
+        print ("Dist to hoop in x-y plane: ", dist_to_hoop, ball_radius, hoop_radius)
         if dist_to_hoop + ball_radius > hoop_radius:
             return False
 
-        if ball_pos[2] < hoop_aabb[1][2]:
+        z_diff = ball_pos[2] - (hoop_pos[2]-hoop_height/2.0)
+        if z_diff <= 0:
+            print ("Ball too low")
+            return False
+        if z_diff > ball_radius:
+            print ("Ball too high")
             return False
 
         return True
+
+
+
+        # print ("Close enough to hoop:", ball_pos[2], hoop_aabb[1][2])
+        # if ball_pos[2] > hoop_aabb[1][2] or ball_pos[2] < hoop_aabb[0][2]:
+        #     return False
+
+        # print ("Ball in hoop")
+        # return True
         # Hoop aabb ((1.7469999999999999, -0.253, 0.7270352281135979), (2.253, 0.253, 1.0929647647338447)) (2.0, 0.0, 1.0)
         # print ("Hoop aabb", hoop_aabb, hoop_pos)
 
