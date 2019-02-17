@@ -2,16 +2,16 @@ import copy
 import arguments
 from itertools import product, chain
 import ray
-import mnist
+import svhn
 
-ray.init(num_cpus=18)
+ray.init(num_cpus=16)
 
-baselines = False
-basic_fisher = True
-basic_gauss_newton = True
-fisher_shrunk = True
-fisher_precondition = True
-fisher_momentum = True
+baselines = True
+basic_fisher = False
+basic_gauss_newton = False
+fisher_shrunk = False
+fisher_precondition = False
+fisher_momentum = False
 fisher_all = True
 gauss_newton_all = True
 
@@ -33,7 +33,7 @@ verbose = False
 @ray.remote
 def run(args, i, n):
     print ("Starting job (" + str(i) + "/" + str(n) +") with args: ", args)
-    mnist.launch_job(args)
+    svhn.launch_job(args)
     print ("Finished job (" + str(i) + "/" + str(n) + ") with args: ", args)
 
 ###
@@ -47,12 +47,6 @@ def run_variants(variants):
     n = len(variants)
     for variant in variants:
         tag, seed, optim, curv_type, lr, bs, cg_iters, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp, shrinkage_method, lanczos_amortization, lanczos_iters, bts, approx_adaptive = variant
-
-        if optim in ['natural_adam', 'natural_amsgrad']:
-            if bs == 125:
-                lr = 0.0001
-            elif bs == 250:
-                lr = 0.0005
 
         args = arguments.get_args()
         args.optim = optim
@@ -95,12 +89,11 @@ all_variants = []
 
 if baselines:
     tag = 'baselines'
-    lrs = [0.01, 0.005, 0.001]
     variants1 = product([tag],
                         seeds,
                         ['sgd', 'adam', 'amsgrad', 'adagrad'],      # optim
                         [''],                                       # curv_type
-                        lrs,                                        # lr
+                        global_lrs,                                        # lr
                         batch_sizes,                                # batch size
                         [10],                                       # cg_iters
                         [0.0],                                      # cg_prev_init_coef
@@ -120,6 +113,8 @@ if baselines:
     # run_variants(variants1)
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
+
+batch_sizes = [250, 500, 1000]
 
 ###
 # Run all basic with no preconditioner, no momentum, no amortization, to ensure code not broken
@@ -143,6 +138,7 @@ if basic_fisher:
                         [0],                                                                    # lanzcos_iters
                         [(0.1, 0.1)],                                                           # betas
                         [False])                                                                # approx adaptive
+
 
     variants1 = list(variants1)
     print (len(variants1))
@@ -260,9 +256,6 @@ if fisher_momentum:
 # Fisher all
 ###
 
-# Some by-hand testing seemed to do OK with larger betas
-global_betas = [(0.1, 0.1), (0.9, 0.9)]
-
 if fisher_all:
     tag = 'fisher_all'
     variants1 = product([tag],
@@ -276,10 +269,10 @@ if fisher_all:
                         [True],                                                                 # cg_precondition_empirical
                         [0.001],                                                                # cg_precondition_regu_coef
                         [0.75],                                                                 # cg_precondition_exp
-                        ['cg', 'lanzcos'],                                                      # shrinkage_method
-                        [10],                                                                   # lanzcos_amortization
-                        [10],                                                                   # lanzcos_iters
-                        global_betas,                                                           # betas
+                        ['cg'],                                                      # shrinkage_method
+                        [0],                                                                   # lanzcos_amortization
+                        [0],                                                                   # lanzcos_iters
+                        [(0.1, 0.1)],                                                           # betas
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
@@ -287,6 +280,7 @@ if fisher_all:
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
 # Gauss Newton all
+
 if gauss_newton_all:
     tag = 'gauss_newton_all'
     variants1 = product([tag],
@@ -300,10 +294,10 @@ if gauss_newton_all:
                         [True],                                                                 # cg_precondition_empirical
                         [0.001],                                                                # cg_precondition_regu_coef
                         [0.75],                                                                 # cg_precondition_exp
-                        ['cg', 'lanczos'],                                                      # shrinkage_method
-                        [10],                                                                   # lanzcos_amortization
-                        [10],                                                                   # lanzcos_iters
-                        global_betas,                                                           # betas
+                        ['cg'],                                                      # shrinkage_method
+                        [0],                                                                   # lanzcos_amortization
+                        [0],                                                                   # lanzcos_iters
+                        [(0.1, 0.1)],                                                           # betas
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)

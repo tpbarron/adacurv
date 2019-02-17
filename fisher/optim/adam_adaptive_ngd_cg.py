@@ -180,7 +180,7 @@ class NaturalAdam(Optimizer):
         # Now that theta_old has been updated, do CG with only theta old
         if curv_type == 'fisher':
             fvp_fn_div_beta2 = make_fvp_fun(closure,
-                                            self._params_old, #theta_old.clone(),
+                                            self._params_old,
                                             bias_correction2=bias_correction2)
         elif curv_type == 'gauss_newton':
             fvp_fn_div_beta2 = make_gnvp_fun(closure,

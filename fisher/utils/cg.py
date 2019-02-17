@@ -92,6 +92,7 @@ def cg_solve(Fvp_fn,
         if rdotr < cg_residual_tol:
             break
     if extract_tridiag:
+        off_diag_elems = off_diag_elems[0:len(diag_elems)-1]
         return x, (np.array(diag_elems), np.array(off_diag_elems))
     return x
 

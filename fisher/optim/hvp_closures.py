@@ -70,11 +70,13 @@ def make_fvp_obj_fun(closure, weighted_fvp_fn, ng):
 def make_gnvp_obj_fun(closure, weighted_fvp_fn, ng):
     v2 = weighted_fvp_fn(ng)
     def f(p):
-        pvar = Variable(p.float(), requires_grad=False)
+        # pvar = Variable(p.float(), requires_grad=False)
+        pvar = torch.nn.Parameter(p.float()) #, requires_grad=False)
         # vector_to_parameters(pvar, self._params_tmp)
         import time
         s = time.time()
-        c, z, tmp_params = closure(pvar) #self._params_tmp)
+        # c, z, tmp_params = closure(pvar)
+        c, z, tmp_params = closure([pvar]) #self._params_tmp)
         e = time.time()
         # print ("Closure time: ", (e-s))
         v1 = GNvp(c, z, tmp_params, ng)
