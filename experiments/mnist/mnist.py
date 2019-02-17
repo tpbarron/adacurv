@@ -12,9 +12,9 @@ from torchvision import datasets, transforms
 import numpy as np
 #import matplotlib.pyplot as plt
 
-from torch.optim.lr_scheduler import LambdaLR
+import torch.optim.lr_scheduler as lr_scheduler
+# from torch.optim.lr_scheduler import LambdaLR
 from fisher.optim.hvp_utils import kl_closure, loss_closure, loss_closure_idx, mean_kl_multinomial
-
 
 class Net(nn.Module):
     def __init__(self):
@@ -212,10 +212,14 @@ def launch_job(args):
     times = [0.0]
 
     if args.decay_lr:
-        lambda_lr = lambda epoch: 0.9 #1.0 / np.sqrt(epoch+1)
-        scheduler = LambdaLR(optimizer, lr_lambda=[lambda_lr])
+        # lambda_lr = lambda epoch: 0.9 #1.0 / np.sqrt(epoch+1)
+        lambda_lr = lambda epoch: 1.0 / np.sqrt(epoch+1)
+        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[lambda_lr])
+        # scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.1)
     for epoch in range(1, args.epochs + 1):
         if args.decay_lr:
+            if args.verbose:
+                print ("Decay factor: ", 1.0 / np.sqrt(epoch+1))
             scheduler.step()
         train(args, model, device, train_loader, test_loader, optimizer, epoch, [accuracies, losses, times])
 

@@ -4,7 +4,7 @@ from itertools import product, chain
 import ray
 import mnist
 
-ray.init(num_cpus=16)
+ray.init(num_cpus=18)
 
 baselines = False
 basic_fisher = True
@@ -47,6 +47,12 @@ def run_variants(variants):
     n = len(variants)
     for variant in variants:
         tag, seed, optim, curv_type, lr, bs, cg_iters, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp, shrinkage_method, lanczos_amortization, lanczos_iters, bts, approx_adaptive = variant
+
+        if optim in ['natural_adam', 'natural_amsgrad']:
+            if bs == 125:
+                lr = 0.0001
+            elif bs == 250:
+                lr = 0.0005
 
         args = arguments.get_args()
         args.optim = optim
@@ -137,7 +143,6 @@ if basic_fisher:
                         [0],                                                                    # lanzcos_iters
                         [(0.1, 0.1)],                                                           # betas
                         [False])                                                                # approx adaptive
-
 
     variants1 = list(variants1)
     print (len(variants1))
@@ -255,6 +260,9 @@ if fisher_momentum:
 # Fisher all
 ###
 
+# Some by-hand testing seemed to do OK with larger betas
+global_betas = [(0.1, 0.1), (0.9, 0.9)]
+
 if fisher_all:
     tag = 'fisher_all'
     variants1 = product([tag],
@@ -271,7 +279,7 @@ if fisher_all:
                         ['cg', 'lanzcos'],                                                      # shrinkage_method
                         [10],                                                                   # lanzcos_amortization
                         [10],                                                                   # lanzcos_iters
-                        [(0.1, 0.1)],                                                           # betas
+                        global_betas,                                                           # betas
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
@@ -279,7 +287,6 @@ if fisher_all:
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
 # Gauss Newton all
-
 if gauss_newton_all:
     tag = 'gauss_newton_all'
     variants1 = product([tag],
@@ -296,7 +303,7 @@ if gauss_newton_all:
                         ['cg', 'lanczos'],                                                      # shrinkage_method
                         [10],                                                                   # lanzcos_amortization
                         [10],                                                                   # lanzcos_iters
-                        [(0.1, 0.1)],                                                           # betas
+                        global_betas,                                                           # betas
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
