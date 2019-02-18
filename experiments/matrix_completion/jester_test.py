@@ -107,27 +107,27 @@ if __name__ == "__main__":
         # optA = fisher_optim.NGD([fac.A],
         #                        lr=0.1,
         #                        curv_type='gauss_newton',
-        #                        shrinkage_method=None, #'lanzcos',
+        #                        shrinkage_method=None, #'cg', #'lanzcos',
         #                        lanczos_iters=20,
         #                        batch_size=100)
         # optB = fisher_optim.NGD([fac.B],
         #                        lr=0.1,
         #                        curv_type='gauss_newton',
-        #                        shrinkage_method=None, #'lanzcos',
+        #                        shrinkage_method=None, #'cg', #'lanzcos',
         #                        lanczos_iters=20,
-        #                        batch_size=100)
+        #                        batch_size=24983)
         optA = fisher_optim.NaturalAdam([fac.A],
                                          lr=0.1,
                                          curv_type='gauss_newton',
                                          shrinkage_method=None,
                                          batch_size=100,
-                                         betas=(0.0, 0.0))
+                                         betas=(0.1, 0.1))
         optB = fisher_optim.NaturalAdam([fac.B],
                                          lr=0.1,
                                          curv_type='gauss_newton',
                                          shrinkage_method=None,
                                          batch_size=24983,
-                                         betas=(0.0, 0.0))
+                                         betas=(0.1, 0.1))
 
 
     else:
