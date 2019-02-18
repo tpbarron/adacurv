@@ -43,15 +43,16 @@ class BasketballEnv(gym.Env):
         self.ballStartOrientation = pb.getQuaternionFromEuler([0,0,0])
         self.initial_ball_z = None
 
-        # concat one arm pos, and vel
-        # 12 + 12 + 6
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(30,))
+        # concat one arm pos, and vel + hoop
+        # 12 + 12 + 6 + 3
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(33,))
         self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(12,))
 
     def get_state(self):
         robot_state = self.robot.state()
         ball_state = self.get_ball_state()
-        state = np.concatenate([robot_state, ball_state])
+        hoop_pos = np.array(self.hoopStartPos)
+        state = np.concatenate([robot_state, ball_state, hoop_pos])
         return state
 
     def close(self):
@@ -368,8 +369,9 @@ if __name__ == "__main__":
         while not done:
             import time
             time.sleep(1.0/240.0)
-            action = np.random.randn(12) * 10.0
-            obs, rew, done, info = env.step(action)
+            pb.stepSimulation()
+            # action = np.random.randn(12) * 10.0
+            # obs, rew, done, info = env.step(action)
             # print ("Caught: ", env.ball_caught())
             # print ("Out of play: ", env.ball_out_of_play())
         obs = env.reset()

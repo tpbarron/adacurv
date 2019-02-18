@@ -176,7 +176,21 @@ if __name__ == "__main__":
     variant = [1, 'BasketballEnvRandomHoop-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, 1000000]
 
     # tag = 'test'
-    # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.0, False, (0.1, 0.1), True, 1000000]
-    # variant = [1, 'Walker2DBulletEnv-v0', 'npg', 'natural_adam', False, 0, 5000, 0.05, False, (0.1, 0.1), True, 1000000]
+    # # 18.96 ngd- no shrink
+    # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'ngd', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, 25000]
+    #
+    # # 18.44 ngd - shrink 'cg'
+    # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'ngd', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, 'cg', 0, 0, False, (0.1, 0.1), True, 25000]
+    #
+    # # 19.40 ngd - shrink 'lanzcos'
+    # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'ngd', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, 'lanczos', 10, 1, False, (0.1, 0.1), True, 25000]
+    #
+    # # 21.94 nat adam - shrink 'cg'
+    # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, 'cg', 0, 0, False, (0.1, 0.1), True, 25000]
+    #
+    # # 21.54 nat adam - no shrink
+    # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, 25000]
+    #
+    # # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, 1000000]
 
     launch_job(tag, variant)
