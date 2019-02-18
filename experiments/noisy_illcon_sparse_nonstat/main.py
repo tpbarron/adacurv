@@ -1,92 +1,129 @@
-"""
-Generate random (possibly ill-conditioned) quadratic
-Generate noisy data from random quadratic
-* possibly drop gradients
-* possibly make quadratic non stationary
-
-"""
-
+import os
 import numpy as np
-from scipy.stats import ortho_group
 
-def perform_induction_step(M):
-    d = M.shape[0]
-    dnew = d+1
-    Mnew = np.eye(dnew)
-    Mnew[1:,1:] = M
+import torch
+import torch.optim as optim
+from torch.autograd import Variable
 
-    v = np.random.randn(dnew)[:,np.newaxis]
-    v /= np.linalg.norm(v)
+from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
 
-    H = np.eye(dnew) - 2.0 * v @ v.T
-    Mnew = H @ Mnew
-    return Mnew
+import quadratic_generator
 
-def random_rotation(dim):
-    th = np.random.uniform(low=0.0, high=2.0*np.pi)
-    M = np.array([[np.cos(th), -np.sin(th)],
-                  [np.sin(th), np.cos(th)]])
-    while M.shape[0] < dim:
-        # print (M)
-        # input("")
-        M = perform_induction_step(M)
-    return M
-    # print (M)
+class Quadratic:
+    def __init__(self, Q, x, v=0):
+        self.Q = Q
+        self.Qvar = Variable(torch.from_numpy(Q), requires_grad=False).float()
+        self.x = x
+        # self.xvar = Variable(torch.from_numpy(x), requires_grad=False).float()
+        self.v = v
+        self.dim = self.Q.shape[0]
 
-def generate_random_matrix_with_eigs(w):
-    Q = ortho_group.rvs(len(w))
-    D = np.diag(w)
-    A = Q.T @ D @ Q
-    return A
+    def sample(self, n=1):
+        """
+        generate data
+        """
+        data = np.empty((self.dim, n))
+        for s in range(n):
+            xi = np.random.normal(loc=self.x, scale=self.v**2.0)
+            data[:, s] = xi
+        return data
 
-def random_eigs_with_condition(cond, dim):
-    if cond == 1.0:
-        w = np.random.uniform(low=0.1, high=1.1, size=(dim,))
+    def loss_fn(self, x, p):
+        px = torch.mean(p - x, dim=1).view(-1, 1)
+        return 0.5 * px.t() @ self.Qvar @ px + self.v**2.0 / 2.0 * torch.trace(self.Qvar)
+        # return 0.5 * torch.mean(p - x, dim=1).t() @ self.Qvar @ (p - x) + self.v**2.0 / 2.0 * torch.trace(self.Qvar)
+
+
+import fisher.optim as fisher_optim
+def train(args, quad):
+
+    p = torch.nn.Parameter(torch.zeros(args.dimension, 1))
+
+    losses = np.empty((args.iters, 2))
+
+    best_loss = np.inf
+    if args.sgd:
+        opt = optim.SGD([p], lr=0.01)
     else:
-        d1 = int(0.9 * dim)
-        d2 = dim - d1
-        w1 = np.random.uniform(low=0.0, high=1.0, size=(d1,))
-        w2 = np.random.uniform(low=cond/2.0, high=cond, size=(d2,))
-        w = np.concatenate((w1, w2))
-    return w
+        opt = fisher_optim.Newton([p], lr=0.01, adaptive=args.adaptive, Q=quad.Q)
+    for i in range(args.iters):
+        opt.zero_grad()
+        data = quad.sample(n=args.batch_size)
 
-def generate_data(dim, noise, samples=1000):
-    xstar = np.random.randn(dim)
-    data = np.empty((samples, dim))
-    for s in range(samples):
-        xi = np.random.normal(loc=xstar, scale=noise**2.0)
-        data[s,:] = xi
-    return xstar, data
+        x = Variable(torch.from_numpy(data)).float()
+        l = quad.loss_fn(x, p)
+        l.backward(retain_graph=not args.sgd)
+
+        # Get flat grad
+        g = gradients_to_vector([p])
+        a = torch.empty_like(g).fill_(1.0-args.grad_sparsity)
+        g_sparse = torch.bernoulli(a) * g
+        vector_to_gradients(g_sparse, [p])
+
+        if args.sgd:
+            opt.step()
+        else:
+            opt.step(l)
+
+        l = float(l)
+        if l < best_loss:
+            best_loss = l
+        losses[i,0] = l
+        losses[i,1] = best_loss
+        # print ("Loss (", i, ")", l, best_loss)
+
+    # print ("Best loss: ", best_loss)
+    return losses
+
+def build_log_dir(args):
+    dir = args.log_dir
+    dir = os.path.join(dir, "batch_size_" + str(args.batch_size))
+    dir = os.path.join(dir, "iters_" + str(args.iters))
+    dir = os.path.join(dir, "dimension_" + str(args.dimension))
+    dir = os.path.join(dir, "condition_" + str(args.condition))
+    dir = os.path.join(dir, "noise_" + str(args.noise))
+    dir = os.path.join(dir, "grad_sparsity_" + str(args.grad_sparsity))
+
+    if args.rotate:
+        dir = os.path.join(dir, "rotate_true")
+    else:
+        dir = os.path.join(dir, "rotate_false")
+
+    if args.adaptive:
+        dir = os.path.join(dir, "adaptive_true")
+    else:
+        dir = os.path.join(dir, "adaptive_false")
+
+    dir = os.path.join(dir, str(args.seed))
+    return dir
+
+
+def launch_job(args):
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+
+    Q, w = quadratic_generator.generate_quadratic(args.condition, args.dimension, args.rotate)
+    x = np.random.randn(args.dimension)
+    np.save("eigs_cond_"+str(args.condition)+".npy", w)
+    input("")
+    quad = Quadratic(Q, x, v=args.noise)
+    # print (Q, Q.shape)
+    # print (quad)
+
+    data = train(args, quad)
+    path = build_log_dir(args)
+
+    try:
+        os.makedirs(path)
+    except:
+        pass
+
+    print ("Saving to: ", path)
+    np.save(os.path.join(path, 'data.npy'), data)
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description='Random quadratic generator')
-    parser.add_argument('--dimension', type=int, default=100,
-                        help='dimension of the quadratic (default: 100)')
-    parser.add_argument('--condition', type=float, default='1.0',
-                        help='Approximate conditioning (default: 1.0)')
-    parser.add_argument('--noise', type=float, default=0.0,
-                        help='noise on samples (default: 0)')
-    parser.add_argument('--grad-sparsity', type=float, default=0.0,
-                        help='gradient sparsity, g_i is set to zero with this probability (default: 0.0)')
-    parser.add_argument('--rotate', action='store_true', default=False,
-                        help='Rotate the matrix randomly')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--log-dir', type=str, default='results/',
-                        help='dir to save output')
 
-    args = parser.parse_args()
+    import arguments
+    args = arguments.get_args()
 
-    np.random.seed(args.seed)
-
-    w = random_eigs_with_condition(args.condition, args.dimension)
-    R = random_rotation(args.dimension) if args.rotate else np.eye(args.dimension)
-    A = R @ np.diag(w) @ R.T
-
-    xstar, data = generate_data(args.dimension, args.noise)
-    print (xstar)
-    print (data.shape)
-
-    print (data[0])
-    print (data[1])
+    launch_job(args)
