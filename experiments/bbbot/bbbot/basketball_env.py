@@ -208,7 +208,6 @@ class BasketballEnv(gym.Env):
         return min_dist > 0.05
 
     def ball_caught(self):
-        hoop_aabb = pb.getAABB(self.hoop, physicsClientId=self.client)
         hoop_pos, hoop_orient = pb.getBasePositionAndOrientation(self.hoop, physicsClientId=self.client)
         ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
         ball_radius = 0.13/2.0
@@ -225,12 +224,15 @@ class BasketballEnv(gym.Env):
         if dist_to_hoop + ball_radius > hoop_radius:
             return False
 
-        if ball_pos[2] < hoop_aabb[1][2]:
+        z_diff = ball_pos[2] - (hoop_pos[2]-hoop_height/2.0)
+        if z_diff <= 0:
+            # print ("Ball too low")
+            return False
+        if z_diff > ball_radius:
+            # print ("Ball too high")
             return False
 
         return True
-        # Hoop aabb ((1.7469999999999999, -0.253, 0.7270352281135979), (2.253, 0.253, 1.0929647647338447)) (2.0, 0.0, 1.0)
-        # print ("Hoop aabb", hoop_aabb, hoop_pos)
 
     def ball_out_of_play(self):
         # if ball z vel is negative and ball below hoop, then consider to be finished

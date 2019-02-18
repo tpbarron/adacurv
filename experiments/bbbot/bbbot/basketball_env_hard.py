@@ -69,7 +69,7 @@ class BasketballEnvHard(gym.Env):
         self.n_step = 0
         self.robot.move_to_initial_position()
         self._load_scene()
-        # self.robot.move_to_pickup_position()
+        self.robot.move_to_pickup_position()
 
         ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
         self.initial_ball_z = ball_pos[2]

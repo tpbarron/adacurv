@@ -23,6 +23,7 @@ def build_log_dir(tag, variant):
     beta1, beta2 = betas
 
     dir = os.path.join('results', tag)
+    dir = os.path.join(dir, algo)
     dir = os.path.join(dir, optim)
     if approx_adaptive:
         dir = os.path.join(dir, "approx_adaptive")

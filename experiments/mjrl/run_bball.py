@@ -5,14 +5,14 @@ from itertools import product, chain
 import ray
 import ray_train
 
-ray.init(num_cpus=1)
+ray.init()
 
 tag = 'pybullet_sample_mode_bball'
 envs = ['BasketballEnv-v0']
 
 seeds = [0, 1, 2]
 algos = ['trpo']
-optims = ['natural_adam', 'natural_amsgrad']
+optims = ['natural_adam'] #, 'natural_amsgrad']
 curv_type = ['fisher']
 
 shrunk_ks = [10]
@@ -24,7 +24,7 @@ use_nn_policy = [True]
 total_samples = 2500000
 
 cg_iters = 10
-cg_prev_init_coef = [0.0, 0.5]
+cg_prev_init_coef = [0.5]
 cg_precondition_empirical = True
 cg_precondition_regu_coef = 0.001
 cg_precondition_exp = 0.75
@@ -81,56 +81,55 @@ variants1b = product(seeds,                     # seed
                      use_nn_policy,             # use nn
                      [total_samples])           # total steps
 
-# adaptive ngd no shrinkage no cg
-variants1c = product(seeds,                     # seed
-                     envs,                      # envs
-                     algos,                     # alg
-                     optims,                   # optim
-                     curv_type,                 # curv_type
-                     lrs,
-                     batch_sizes,
+# # adaptive ngd no shrinkage no cg
+# variants1c = product(seeds,                     # seed
+#                      envs,                      # envs
+#                      algos,                     # alg
+#                      optims,                   # optim
+#                      curv_type,                 # curv_type
+#                      lrs,
+#                      batch_sizes,
 
-                     [10],                      # cg_iters
-                     [1e-10],                   # cg_residual_tol
-                     [0.0],                     # cg_prev_init_coef
-                     [False],                   # cg_precondition_empirical
-                     [0.0],                     # cg_precondition_regu_coef
-                     [0.0],                     # cg_precondition_exp
-                     [None],                    # shrinkage_method
-                     [0],                       # lanzcos_amortization
-                     [0],                       # lanzcos_iters
+#                      [10],                      # cg_iters
+#                      [1e-10],                   # cg_residual_tol
+#                      [0.0],                     # cg_prev_init_coef
+#                      [False],                   # cg_precondition_empirical
+#                      [0.0],                     # cg_precondition_regu_coef
+#                      [0.0],                     # cg_precondition_exp
+#                      [None],                    # shrinkage_method
+#                      [0],                       # lanzcos_amortization
+#                      [0],                       # lanzcos_iters
 
-                     [False],                   # approx adaptive
-                     [(0.0, 0.0)],              # betas
-                     use_nn_policy,             # use nn
-                     [total_samples])           # total steps
+#                      [False],                   # approx adaptive
+#                      [(0.0, 0.0)],              # betas
+#                      use_nn_policy,             # use nn
+#                      [total_samples])           # total steps
 
-# adaptive ngd versions no shrinkage with cg enhancements
-variants1d = product(seeds,                     # seed
-                     envs,                      # envs
-                     algos,                     # alg
-                     optims,                   # optim
-                     curv_type,                 # curv_type
-                     lrs,
-                     batch_sizes,
+# # adaptive ngd versions no shrinkage with cg enhancements
+# variants1d = product(seeds,                     # seed
+#                      envs,                      # envs
+#                      algos,                     # alg
+#                      optims,                   # optim
+#                      curv_type,                 # curv_type
+#                      lrs,
+#                      batch_sizes,
 
-                     [10],                      # cg_iters
-                     [1e-10],                   # cg_residual_tol
-                     [0.5],                     # cg_prev_init_coef
-                     [True],                   # cg_precondition_empirical
-                     [0.001],                     # cg_precondition_regu_coef
-                     [0.75],                     # cg_precondition_exp
-                     [None],                    # shrinkage_method
-                     [0],                       # lanzcos_amortization
-                     [0],                       # lanzcos_iters
+#                      [10],                      # cg_iters
+#                      [1e-10],                   # cg_residual_tol
+#                      [0.5],                     # cg_prev_init_coef
+#                      [True],                   # cg_precondition_empirical
+#                      [0.001],                     # cg_precondition_regu_coef
+#                      [0.75],                     # cg_precondition_exp
+#                      [None],                    # shrinkage_method
+#                      [0],                       # lanzcos_amortization
+#                      [0],                       # lanzcos_iters
 
-                     [False],                   # approx adaptive
-                     [(0.0, 0.0)],              # betas
-                     use_nn_policy,             # use nn
-                     [total_samples])           # total steps
+#                      [False],                   # approx adaptive
+#                      [(0.0, 0.0)],              # betas
+#                      use_nn_policy,             # use nn
+#                      [total_samples])           # total steps
 
 # ngd versions with shrinkage and cg enhancements
-
 variants2a = product(seeds,                     # seed
                      envs,                      # envs
                      algos,                     # alg
@@ -177,7 +176,7 @@ variants2b = product(seeds,                     # seed
                      use_nn_policy,             # use nn
                      [total_samples])           # total steps
 
-all_variants = copy.deepcopy(list(chain(variants1a, variants1b, variants1c, variants1d, variants2a, variants2b)))
+all_variants = copy.deepcopy(list(chain(variants1a, variants1b, variants2a, variants2b)))
 print (list(all_variants))
 num_variants = len(all_variants)
 print (len(all_variants))
