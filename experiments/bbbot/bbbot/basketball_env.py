@@ -72,9 +72,9 @@ class BasketballEnv(gym.Env):
         if self.hoop is None:
             self.hoop = pb.loadSDF(os.path.join(os.path.dirname(__file__), 'assets/bbbot_gazebo/models/hoop/model.sdf'), physicsClientId=self.client)[0]
         if self.random_hoop:
+            # Random 30 degree around x axis
             theta = (np.random.random() * 2.0 - 1.0) * np.pi / 12.0
-            xi, yi, zi = self.hoopStartPosOrig # [1.5, 0.0, 1.0]
-            hyp = xi
+            hyp, yi, zi = self.hoopStartPosOrig # [1.5, 0.0, 1.0]
             x = np.cos(theta) * hyp
             y = np.sin(theta) * hyp
             self.hoopStartPos = [x, y, zi]
