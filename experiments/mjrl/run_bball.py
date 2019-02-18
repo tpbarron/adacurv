@@ -5,10 +5,10 @@ from itertools import product, chain
 import ray
 import ray_train
 
-ray.init()
+ray.init(num_cpus=10)
 
-tag = 'pybullet_sample_mode_bball'
-envs = ['BasketballEnv-v0']
+tag = 'pybullet_sample_mode_bball_random_hoop'
+envs = ['BasketballEnvRandomHoop-v0']
 
 seeds = [0, 1, 2]
 algos = ['trpo']
@@ -33,7 +33,7 @@ lanczos_amortization = 0
 lanczos_iters = 0
 
 
-# ngd versions without shrinkage
+# ngd versions without shrinkage and without cg
 variants1a = product(seeds,                     # seed
                      envs,                      # envs
                      algos,                     # alg

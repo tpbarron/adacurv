@@ -28,6 +28,22 @@ register(
     max_episode_steps=250,
 )
 
+
+register(
+    id='BasketballEnvRandomHoop-v0',
+    entry_point='bbbot.basketball_env:BasketballEnvRandomHoop',
+    max_episode_steps=250,
+)
+
+register(
+    id='BasketballEnvRandomHoopRendered-v0',
+    entry_point='bbbot.basketball_env:BasketballEnvRandomHoopRendered',
+    max_episode_steps=250
+)
+
+
+### -- unused
+
 register(
     id='BasketballEnvHard-v0',
     entry_point='bbbot.basketball_env_hard:BasketballEnvHard',

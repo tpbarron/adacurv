@@ -331,7 +331,17 @@ def make_basketball_env_rendered():
     env = BasketballEnv(render=True, delay=True)
     return env
 
+def make_basketball_env_random_hoop():
+    env = BasketballEnv(random_hoop=True)
+    return env
+
+def make_basketball_env_random_hoop_rendered():
+    env = BasketballEnv(render=True, delay=True, random_hoop=True)
+    return env
+
 BasketballEnvRendered = make_basketball_env_rendered
+BasketballEnvRandomHoop = make_basketball_env_random_hoop
+BasketballEnvRandomHoopRendered = make_basketball_env_random_hoop_rendered
 
 
 import numpy as np
