@@ -13,13 +13,14 @@ from bbbot import basketball_robot
 
 class BasketballEnv(gym.Env):
 
-    def __init__(self, render=False, delay=False, horizon=500):
+    def __init__(self, render=False, delay=False, horizon=500, random_hoop=False):
         if render:
             mode = pb.GUI
         else:
             mode = pb.DIRECT
         self.delay = delay
         self.horizon = horizon
+        self.random_hoop = random_hoop
 
         self.client = pb.connect(mode)
         pb.setAdditionalSearchPath(pybullet_data.getDataPath(), physicsClientId=self.client)
@@ -32,6 +33,7 @@ class BasketballEnv(gym.Env):
         self.cyl = None
         self.ball = None
 
+        self.hoopStartPosOrig = [1.5, 0.0, 1.0]
         self.hoopStartPos = [1.5, 0.0, 1.0]
         self.hoopStartOrientation = pb.getQuaternionFromEuler([0,0,0])
         self.cylStartPos = [0.2, 0.0, 0.4+0.2]
@@ -59,7 +61,7 @@ class BasketballEnv(gym.Env):
         self.n_step = 0
         self.robot.move_to_initial_position()
         self._load_scene()
-        self.robot.move_to_pickup_position()
+        # self.robot.move_to_pickup_position()
 
         ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
         self.initial_ball_z = ball_pos[2]
@@ -69,6 +71,13 @@ class BasketballEnv(gym.Env):
     def _load_scene(self):
         if self.hoop is None:
             self.hoop = pb.loadSDF(os.path.join(os.path.dirname(__file__), 'assets/bbbot_gazebo/models/hoop/model.sdf'), physicsClientId=self.client)[0]
+        if self.random_hoop:
+            theta = (np.random.random() * 2.0 - 1.0) * np.pi / 12.0
+            xi, yi, zi = self.hoopStartPosOrig # [1.5, 0.0, 1.0]
+            hyp = xi
+            x = np.cos(theta) * hyp
+            y = np.sin(theta) * hyp
+            self.hoopStartPos = [x, y, zi]
         pb.resetBasePositionAndOrientation(self.hoop, self.hoopStartPos, self.hoopStartOrientation, physicsClientId=self.client)
         if self.cyl is None:
             self.cyl = pb.loadSDF(os.path.join(os.path.dirname(__file__), 'assets/bbbot_gazebo/models/cylinder/model.sdf'), physicsClientId=self.client)[0]
@@ -135,18 +144,38 @@ class BasketballEnv(gym.Env):
         ball_pos, ball_orient = pb.getBasePositionAndOrientation(self.ball, physicsClientId=self.client)
         hoop_pos, hoop_orient = pb.getBasePositionAndOrientation(self.hoop, physicsClientId=self.client)
 
+        ball_pos = np.array(ball_pos)
+        hoop_pos = np.array(hoop_pos)
+
         x = hoop_pos[0] - ball_pos[0]
+        y = hoop_pos[1] - ball_pos[1]
         z = (hoop_pos[2] + 0.1) - ball_pos[2]
 
+        # Rotation around z axis
+        xy_vec = np.array([x, y])
+        xy_vec /= np.linalg.norm(xy_vec)
+        xy_coord = np.array([1, 0])
+        theta_y = np.sign(y) * np.abs(np.arccos(np.dot(xy_vec, xy_coord)))
+
+        # distance along vector to hoop
+        d_vec = np.sqrt(x**2.0 + y**2.0)
+
         g = 10.0
-        term = (x**2.0 * g) / (x * np.sin(2.0 * theta) - 2.0 * z * np.cos(theta)**2.0)
+        term = (d_vec**2.0 * g) / (d_vec * np.sin(2.0 * theta) - 2.0 * z * np.cos(theta)**2.0)
         if term <= 0.0:
             return None
+
         v0 = np.sqrt( term )
         v0_x = np.cos(theta) * v0
         v0_z = np.sin(theta) * v0
 
         idealized_lin_vel = np.array([v0_x, 0.0, v0_z])
+        R = np.array([
+            [np.cos(theta_y), -np.sin(theta_y), 0],
+            [np.sin(theta_y), np.cos(theta_y), 0],
+            [0, 0, 1]
+        ])
+        idealized_lin_vel = R @ idealized_lin_vel
         return idealized_lin_vel
 
     def reward_distance_to_hoop(self):
@@ -305,7 +334,7 @@ BasketballEnvRendered = make_basketball_env_rendered
 
 import numpy as np
 if __name__ == "__main__":
-    env = BasketballEnv(render=True)
+    env = BasketballEnv(render=True, random_hoop=True)
     obs = env.reset()
     print (obs, env)
 
@@ -327,7 +356,7 @@ if __name__ == "__main__":
         while not done:
             import time
             time.sleep(1.0/240.0)
-            action = np.random.randn(6) * 10.0
+            action = np.random.randn(12) * 10.0
             obs, rew, done, info = env.step(action)
             # print ("Caught: ", env.ball_caught())
             # print ("Out of play: ", env.ball_out_of_play())
