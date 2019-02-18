@@ -109,6 +109,29 @@ def randomized_linesearch(f, theta_old, theta, nevals=10, eps=1e-8):
             min_alpha = alpha
     return min_th, min_f, min_alpha
 
+def randomized_linesearch_idx(f, theta_old, theta, nevals=10, eps=1e-8):
+    # TODO: parallelize calls to f
+    # This could be done in parallel but since the variable is the model parameters
+    # it would require each model to exist separately in memory, which in some cases wouldn't be
+    # possible. It appears the pathos library could handle the closures but would need care because
+    # model would need to be copied.
+    # print ("LS idx")
+    alphas = np.linspace(0.0+eps, 1.0-eps, nevals)
+    min_th = None
+    min_f = None
+    min_alpha = None
+    for i in range(len(alphas)):
+        alpha = alphas[i]
+        print ("alpha: ", alpha)
+        th = (1 - alpha) * theta_old + alpha * theta
+        print ("Theta: ", th.shape)
+        f_eval = f(th)
+        if min_th is None or f_eval < min_f:
+            min_f = f_eval
+            min_th = th
+            min_alpha = alpha
+    return min_th, min_f, min_alpha
+
 def gss_linesearch(f, a, b, tol=1e-5):
     '''
     In our application:

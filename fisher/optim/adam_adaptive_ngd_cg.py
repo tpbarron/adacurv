@@ -206,7 +206,7 @@ class NaturalAdam(Optimizer):
 
         extract_tridiag = self._param_group['shrinkage_method'] == 'cg'
         cg_result = cg_solve(fvp_fn_div_beta2,
-                      g.data.clone(),
+                      g_hat.data.clone(),
                       x_0=self._param_group['cg_prev_init_coef'] * state['ng_prior'],
                       M=M,
                       cg_iters=self._param_group['cg_iters'],

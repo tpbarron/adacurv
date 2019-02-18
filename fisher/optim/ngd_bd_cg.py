@@ -7,7 +7,7 @@ import torch
 from torch.optim.optimizer import Optimizer, required
 from torch.nn.utils import parameters_to_vector
 
-from fisher.optim.hvp_closures import make_fvp_fun, make_hvp_fun, make_gnvp_fun, make_gnvp_fun_idx
+from fisher.optim.hvp_closures import make_fvp_fun, make_hvp_fun, make_gnvp_fun, make_fvp_fun_idx, make_gnvp_fun_idx
 from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
 from fisher.utils.cg import cg_solve
 from fisher.utils.lanczos import lanczos_iteration, estimate_shrinkage
@@ -279,6 +279,9 @@ class NGD_BD(Optimizer):
                 state['rho'] = 0.0
                 state['diag_shrunk'] = 1.0
 
+
+            state['step'] += 1
+            
             g = gradients_to_vector(params)
 
             if 'ng_prior' not in state:
@@ -290,7 +293,7 @@ class NGD_BD(Optimizer):
 
             # Create closure to pass to Lanczos and CG
             if curv_type == 'fisher':
-                Fvp_theta_fn = make_fvp_fun(closure, params)
+                Fvp_theta_fn = make_fvp_fun_idx(closure, params, params_i, params_j)
             elif curv_type == 'gauss_newton':
                 # Pass indices instead of actual params, since these params should be the same at
                 # the model params anyway. Then the closure should set only the subset of params

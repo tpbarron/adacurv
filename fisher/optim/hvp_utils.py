@@ -37,6 +37,37 @@ def kl_closure(model, inputs, targets, kl_fn):
         return f, tmp_params
     return func
 
+def kl_closure_idx(model, inputs, targets, kl_fn):
+    def func(params, params_i, params_j):
+        # print ("Params inpute: ", type(params))
+        import time
+
+        old_params = list(model.parameters()) #parameters_to_vector(model.parameters())
+
+        t1s = time.time()
+        cur_params = [v.clone() for v in old_params]
+        cur_params[params_i:params_j] = params
+        t1e = time.time()
+        # print ("klidx 0: ", (t1e-t1s))
+
+        t1s = time.time()
+        vector_to_parameters(parameters_to_vector(cur_params), model.parameters())
+        t1e = time.time()
+        # print ("klidx 1: ", (t1e-t1s))
+
+        new_log_probs = model(inputs)
+        old_log_probs = torch.clone(new_log_probs).detach()
+        f = kl_fn(new_log_probs, old_log_probs)
+
+        t1s = time.time()
+        tmp_params = list(model.parameters())[params_i:params_j]
+        vector_to_parameters(parameters_to_vector(old_params), model.parameters())
+        t1e = time.time()
+        # print ("klidx 2: ", (t1e-t1s))
+
+        return f, tmp_params
+    return func
+
 def loss_closure(model, inputs, targets, loss_fn):
     def func(params):
         old_params = parameters_to_vector(model.parameters())
