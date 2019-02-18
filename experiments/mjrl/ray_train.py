@@ -167,13 +167,13 @@ if __name__ == "__main__":
     # tag = 'bball_hoop1.5_torqctrl'
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 500000]
 
-    tag = 'bball_hoop1.5_velctrl_botharms_angle55'
+    tag = 'bball_randhoop1.5_velctrl_botharms_angle55'
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.0, False, (0.1, 0.1), True, 1000000]
 
     # # seed, envs, alg, optim, curv_type, lr, batch size, cg_iters, cg_residual_tol, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp
     # shrinkage_methodm, lanzcos_amortization, lanzcos_iters,  approx adaptive, betas, use nn, total_samples
-    variant = [1, 'BasketballEnv-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, 1000000]
+    variant = [1, 'BasketballEnvRandomHoop-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, 1000000]
 
     # tag = 'test'
     # variant = [1, 'Walker2DBulletEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.0, False, (0.1, 0.1), True, 1000000]
