@@ -21,7 +21,7 @@ approx_adaptive = [False]
 betas = [(0.1, 0.1), (0.9, 0.9)]
 lrs = [0.01] # NOTE: if have more than 1 lr, make sure TRPO only runs once!
 use_nn_policy = [True]
-total_samples = 2500000
+total_samples = 2000000
 
 cg_iters = 10
 cg_prev_init_coef = [0.5]
