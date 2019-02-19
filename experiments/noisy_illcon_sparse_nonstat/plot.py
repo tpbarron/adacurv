@@ -124,9 +124,14 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
         ax.semilogy(newton_adap, color='xkcd:fuchsia', ls='dashed', label='AdaCurv\nNewton')
         ax.tick_params(axis='x', colors='white')
 
+        if i == 4:
+            ax.yaxis.set_label_position("right")
+            ax.set_ylabel("Aligned", rotation=270, labelpad=10)
+
         i+= 1
         if i == 0:
             lines.extend([l1, l2])
+
 
     i = 1
     for n, s in noise:
@@ -140,6 +145,10 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
         ax.semilogy(newton, color='#2F4F4F')
         ax.semilogy(newton_adap, color='xkcd:fuchsia', ls='dashed')
         ax.tick_params(axis='x', colors='white')
+
+        if i == 4:
+            ax.yaxis.set_label_position("right")
+            ax.set_ylabel("Rotated", rotation=270, labelpad=10)
 
         i += 1
 
@@ -156,6 +165,11 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
         ax.semilogy(newton, color='#2F4F4F')
         ax.semilogy(newton_adap, color='xkcd:fuchsia', ls='dashed')
         ax.tick_params(axis='x', colors='white')
+
+        if i == 4:
+            ax.yaxis.set_label_position("right")
+            ax.set_ylabel("Aligned", rotation=270, labelpad=10)
+
         i+= 1
 
 
@@ -171,6 +185,10 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
         ax.semilogy(newton, color='#2F4F4F')
         ax.semilogy(newton_adap, color='xkcd:fuchsia', ls='dashed')
         ax.set_xticks([0, 50, 100])
+
+        if i == 4:
+            ax.yaxis.set_label_position("right")
+            ax.set_ylabel("Rotated", rotation=270, labelpad=10)
 
         i += 1
 

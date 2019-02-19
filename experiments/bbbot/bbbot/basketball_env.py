@@ -35,6 +35,7 @@ class BasketballEnv(gym.Env):
 
         self.hoopStartPosOrig = [1.5, 0.0, 1.0]
         self.hoopStartPos = [1.5, 0.0, 1.0]
+        self.hoopTheta = 0.0
         self.hoopStartOrientation = pb.getQuaternionFromEuler([0,0,0])
         self.cylStartPos = [0.2, 0.0, 0.4+0.2]
         self.cylStartOrientation = pb.getQuaternionFromEuler([0,0,0])
@@ -45,14 +46,21 @@ class BasketballEnv(gym.Env):
 
         # concat one arm pos, and vel + hoop
         # 12 + 12 + 6 + 3
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(33,))
+        if random_hoop:
+            obs_dim = 31
+        else:
+            obs_dim = 30
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_dim,))
         self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(12,))
 
     def get_state(self):
         robot_state = self.robot.state()
         ball_state = self.get_ball_state()
-        hoop_pos = np.array(self.hoopStartPos)
-        state = np.concatenate([robot_state, ball_state, hoop_pos])
+        # hoop_pos = np.array(self.hoopStartPos)
+        if self.random_hoop:
+            state = np.concatenate([robot_state, ball_state, np.array([self.hoopTheta])])
+        else:
+            state = np.concatenate([robot_state, ball_state])
         return state
 
     def close(self):
@@ -79,6 +87,7 @@ class BasketballEnv(gym.Env):
             x = np.cos(theta) * hyp
             y = np.sin(theta) * hyp
             self.hoopStartPos = [x, y, zi]
+            self.hoopTheta = theta
         pb.resetBasePositionAndOrientation(self.hoop, self.hoopStartPos, self.hoopStartOrientation, physicsClientId=self.client)
         if self.cyl is None:
             self.cyl = pb.loadSDF(os.path.join(os.path.dirname(__file__), 'assets/bbbot_gazebo/models/cylinder/model.sdf'), physicsClientId=self.client)[0]
