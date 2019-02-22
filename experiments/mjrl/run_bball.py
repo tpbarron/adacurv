@@ -5,12 +5,12 @@ from itertools import product, chain
 import ray
 import ray_train
 
-ray.init(num_cpus=10)
+ray.init()
 
 tag = 'pybullet_sample_mode_bball_random_hoop'
 envs = ['BasketballEnvRandomHoop-v0']
 
-seeds = [0, 1, 2]
+seeds = [0] #, 1, 2]
 algos = ['trpo']
 optims = ['natural_adam'] #, 'natural_amsgrad']
 curv_type = ['fisher']
@@ -18,7 +18,7 @@ curv_type = ['fisher']
 shrunk_ks = [10]
 batch_sizes = [1000, 2000, 5000]
 approx_adaptive = [False]
-betas = [(0.1, 0.1)]
+betas = [(0.1, 0.1), (0.9, 0.9)]
 lrs = [0.01] # NOTE: if have more than 1 lr, make sure TRPO only runs once!
 use_nn_policy = [True]
 gn_vfn_opt = [False, True]
