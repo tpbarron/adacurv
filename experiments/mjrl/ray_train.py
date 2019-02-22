@@ -19,7 +19,7 @@ decay = False
 def build_log_dir(tag, variant):
     seed, env, algo, optim, curv_type, lr, batch_size, cg_iters, cg_residual_tol, cg_prev_init_coef, \
         cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp,  \
-        shrinkage_method, lanczos_amortization, lanczos_iters, approx_adaptive, betas, use_nn_policy, total_samples, gn_vfn_opt = variant
+        shrinkage_method, lanczos_amortization, lanczos_iters, approx_adaptive, betas, use_nn_policy, gn_vfn_opt, total_samples = variant
     beta1, beta2 = betas
 
     dir = os.path.join('results', tag)
@@ -77,7 +77,7 @@ def launch_job(tag, variant):
 
     seed, env, algo, optim, curv_type, lr, batch_size, cg_iters, cg_residual_tol, cg_prev_init_coef, \
         cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp,  \
-        shrinkage_method, lanczos_amortization, lanczos_iters, approx_adaptive, betas, use_nn_policy, total_samples, gn_vfn_opt = variant
+        shrinkage_method, lanczos_amortization, lanczos_iters, approx_adaptive, betas, use_nn_policy, gn_vfn_opt, total_samples = variant
     beta1, beta2 = betas
 
     iters = int(total_samples / batch_size)
@@ -89,8 +89,9 @@ def launch_job(tag, variant):
         policy = MLP(e.spec, hidden_sizes=(64,), seed=seed)
     else:
         policy = LinearPolicy(e.spec, seed=seed)
+    vfn_batch_size = 256 if gn_vfn_opt else 64
     # baseline = MLPBaseline(e.spec, reg_coef=1e-3, batch_size=64, epochs=2, learn_rate=1e-3)
-    baseline = MLPBaseline(e.spec, reg_coef=1e-3, batch_size=256, epochs=2, learn_rate=1e-3, use_gauss_newton=gn_vfn_opt)
+    baseline = MLPBaseline(e.spec, reg_coef=1e-3, batch_size=vfn_batch_size, epochs=2, learn_rate=1e-3, use_gauss_newton=gn_vfn_opt)
     # agent = NPG(e, policy, baseline, normalized_step_size=0.005, seed=SEED, save_logs=True)
 
     common_kwargs = dict(lr=lr,
@@ -186,7 +187,7 @@ if __name__ == "__main__":
 
     # # seed, envs, alg, optim, curv_type, lr, batch size, cg_iters, cg_residual_tol, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp
     # shrinkage_methodm, lanzcos_amortization, lanzcos_iters,  approx adaptive, betas, use nn, total_samples
-    variant = [1, 'BasketballEnvRandomHoop-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, 1000000, False]
+    variant = [1, 'BasketballEnvRandomHoop-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, False, 1000000]
 
     # tag = 'test'
     # # 18.96 ngd- no shrink

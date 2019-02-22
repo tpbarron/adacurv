@@ -10,7 +10,7 @@ ray.init()
 tag = 'pybullet_sample_mode_bball_random_hoop'
 envs = ['BasketballEnvRandomHoop-v0']
 
-seeds = [0] #, 1, 2]
+seeds = [0, 1, 2]
 algos = ['trpo']
 optims = ['natural_adam'] #, 'natural_amsgrad']
 curv_type = ['fisher']
@@ -18,7 +18,7 @@ curv_type = ['fisher']
 shrunk_ks = [10]
 batch_sizes = [1000, 2000, 5000]
 approx_adaptive = [False]
-betas = [(0.1, 0.1), (0.9, 0.9)]
+betas = [(0.1, 0.1)] #, (0.9, 0.9)]
 lrs = [0.01] # NOTE: if have more than 1 lr, make sure TRPO only runs once!
 use_nn_policy = [True]
 gn_vfn_opt = [False, True]
@@ -35,6 +35,7 @@ lanczos_iters = 0
 
 ngd_noshrinkage_nocgplus = False
 ngd_noshrinkage_yescgplus = True
+
 adangd_noshrinkage_nocgplus = False
 adangd_noshrinkage_yescgplus = False
 
@@ -233,7 +234,7 @@ def run(tag, variant, i, n):
     print ("Finished job (" + str(i) + "/" + str(n) + ") with args: ", variant, " in ", (time.time()-ts))
 
 gets = []
-for variant in all_variants:
+for variant in reversed(all_variants):
     i = 1
     pid = run.remote(tag, variant, i, num_variants)
     gets.append(pid)
