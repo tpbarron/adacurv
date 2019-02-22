@@ -4,16 +4,18 @@ from itertools import product, chain
 import ray
 import mnist
 
-ray.init(num_cpus=18)
+ray.init(num_cpus=20)
 
 baselines = False
-basic_fisher = True
-basic_gauss_newton = True
-fisher_shrunk = True
-fisher_precondition = True
-fisher_momentum = True
-fisher_all = True
-gauss_newton_all = True
+basic_fisher = False
+basic_gauss_newton = False
+fisher_shrunk = False
+fisher_precondition = False
+fisher_momentum = False
+fisher_all_no_shrunk = True
+#gauss_newton_all_no_shrunk = True
+fisher_all = False
+gauss_newton_all = False
 
 ###
 # Common params
@@ -286,6 +288,29 @@ if fisher_all:
     print (len(variants1))
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
+if fisher_all_no_shrunk:
+    tag = 'fisher_gn_all_no_shrunk'
+    variants1 = product([tag],
+                        seeds,
+                        ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
+                        ['fisher', 'gauss_newton'],                                                             # curv_type
+                        global_lrs,                                                             # lr
+                        batch_sizes,                                                            # batch size                                                                                               
+                        [10],                                                                   # cg_iters                                                                                                 
+                        [0.5],                                                                  # cg_prev_init_coef                                                                                        
+                        [True],                                                                 # cg_precondition_empirical                                                                                
+                        [0.001],                                                                # cg_precondition_regu_coef                                                                                
+                        [0.75],                                                                 # cg_precondition_exp                                                                                      
+                        [None],                                                      # shrinkage_method                                                                                          
+                        [0],                                                                   # lanzcos_amortization                                                                                      
+                        [0],                                                                   # lanzcos_iters                                                                                             
+                        global_betas,                                                           # betas                                                                                                    
+                        [False])                                                                # approx adaptive                                                                                          
+
+    variants1 = list(variants1)
+    print (len(variants1))
+    all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
+    
 # Gauss Newton all
 if gauss_newton_all:
     tag = 'gauss_newton_all'
