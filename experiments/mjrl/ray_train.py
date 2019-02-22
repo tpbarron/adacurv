@@ -19,10 +19,11 @@ decay = False
 def build_log_dir(tag, variant):
     seed, env, algo, optim, curv_type, lr, batch_size, cg_iters, cg_residual_tol, cg_prev_init_coef, \
         cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp,  \
-        shrinkage_method, lanczos_amortization, lanczos_iters, approx_adaptive, betas, use_nn_policy, total_samples = variant
+        shrinkage_method, lanczos_amortization, lanczos_iters, approx_adaptive, betas, use_nn_policy, total_samples, gn_vfn_opt = variant
     beta1, beta2 = betas
 
     dir = os.path.join('results', tag)
+    dir = os.path.join(dir, env)
     dir = os.path.join(dir, algo)
     dir = os.path.join(dir, optim)
     if approx_adaptive:
@@ -52,6 +53,17 @@ def build_log_dir(tag, variant):
     else:
         dir = os.path.join(dir, "shrunk_false")
 
+    if use_nn_policy:
+        dir = os.path.join(dir, "nn_policy")
+    else:
+        dir = os.path.join(dir, "lin_policy")
+
+    if gn_vfn_opt:
+        dir = os.path.join(dir, "gn_vfn_opt")
+    else:
+        dir = os.path.join(dir, "gn_adam_opt")
+
+    dir = os.path.join(dir, "total_samples_"+str(total_samples))
     dir = os.path.join(dir, "batch_size_"+str(batch_size))
     dir = os.path.join(dir, "lr_"+str(lr))
 
@@ -65,7 +77,7 @@ def launch_job(tag, variant):
 
     seed, env, algo, optim, curv_type, lr, batch_size, cg_iters, cg_residual_tol, cg_prev_init_coef, \
         cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp,  \
-        shrinkage_method, lanczos_amortization, lanczos_iters, approx_adaptive, betas, use_nn_policy, total_samples = variant
+        shrinkage_method, lanczos_amortization, lanczos_iters, approx_adaptive, betas, use_nn_policy, total_samples, gn_vfn_opt = variant
     beta1, beta2 = betas
 
     iters = int(total_samples / batch_size)
@@ -77,7 +89,8 @@ def launch_job(tag, variant):
         policy = MLP(e.spec, hidden_sizes=(64,), seed=seed)
     else:
         policy = LinearPolicy(e.spec, seed=seed)
-    baseline = MLPBaseline(e.spec, reg_coef=1e-3, batch_size=64, epochs=2, learn_rate=1e-3)
+    # baseline = MLPBaseline(e.spec, reg_coef=1e-3, batch_size=64, epochs=2, learn_rate=1e-3)
+    baseline = MLPBaseline(e.spec, reg_coef=1e-3, batch_size=256, epochs=2, learn_rate=1e-3, use_gauss_newton=gn_vfn_opt)
     # agent = NPG(e, policy, baseline, normalized_step_size=0.005, seed=SEED, save_logs=True)
 
     common_kwargs = dict(lr=lr,
@@ -167,13 +180,13 @@ if __name__ == "__main__":
     # tag = 'bball_hoop1.5_torqctrl'
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 1000, 0.0, False, (0.0, 0.0), True, 500000]
 
-    tag = 'bball_randhoop1.5_velctrl_botharms_angle55'
+    tag = 'test' #bball_randhoop1.5_velctrl_botharms_angle55'
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'ngd', False, 0, 5000, 0.0, False, (0.0, 0.0), True, 1000000]
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.0, False, (0.1, 0.1), True, 1000000]
 
     # # seed, envs, alg, optim, curv_type, lr, batch size, cg_iters, cg_residual_tol, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp
     # shrinkage_methodm, lanzcos_amortization, lanzcos_iters,  approx adaptive, betas, use nn, total_samples
-    variant = [1, 'BasketballEnvRandomHoop-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, 1000000]
+    variant = [1, 'BasketballEnvRandomHoop-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, 1000000, False]
 
     # tag = 'test'
     # # 18.96 ngd- no shrink

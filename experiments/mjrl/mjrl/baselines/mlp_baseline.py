@@ -8,30 +8,48 @@ import numpy as np
 import copy
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.autograd import Variable
 
 import pickle
 
+from fisher.optim.hvp_utils import kl_closure, loss_closure
+
+class ValueFn(nn.Module):
+
+    def __init__(self, n):
+        super(ValueFn, self).__init__()
+        self.fc0 = nn.Linear(n+4, 128)
+        self.fc1 = nn.Linear(128, 128)
+        self.fc2 = nn.Linear(128, 1)
+
+    def forward(self, x, return_z=False):
+        x = F.relu(self.fc0(x))
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        if return_z:
+            return x, x
+        return x
+
 class MLPBaseline:
     def __init__(self, env_spec, obs_dim=None, learn_rate=1e-3, reg_coef=0.0,
-                 batch_size=64, epochs=1, use_gpu=False):
+                 batch_size=64, epochs=1, use_gpu=False, use_gauss_newton=False):
         self.n = obs_dim if obs_dim is not None else env_spec.observation_dim
         self.batch_size = batch_size
         self.epochs = epochs
         self.reg_coef = reg_coef
         self.use_gpu = use_gpu
+        self.use_gauss_newton = use_gauss_newton
 
-        self.model = nn.Sequential()
-        self.model.add_module('fc_0', nn.Linear(self.n+4, 128))
-        self.model.add_module('relu_0', nn.ReLU())
-        self.model.add_module('fc_1', nn.Linear(128, 128))
-        self.model.add_module('relu_1', nn.ReLU())
-        self.model.add_module('fc_2', nn.Linear(128, 1))
-
+        self.model = ValueFn(self.n)
         if self.use_gpu:
             self.model.cuda()
 
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learn_rate, weight_decay=reg_coef)
+        if self.use_gauss_newton:
+            import fisher.optim as fisher_optim
+            self.optimizer = fisher_optim.NaturalAdam(self.model.parameters(), curv_type='gauss_newton', lr=learn_rate)
+        else:
+            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learn_rate, weight_decay=reg_coef)
         self.loss_function = torch.nn.MSELoss()
 
     def _features(self, paths):
@@ -72,6 +90,7 @@ class MLPBaseline:
             featmat_var = Variable(torch.from_numpy(featmat), requires_grad=False)
             returns_var = Variable(torch.from_numpy(returns), requires_grad=False)
 
+        return_errors = True
         if return_errors:
             if self.use_gpu:
                 predictions = self.model(featmat_var).cpu().data.numpy().ravel()
@@ -79,6 +98,7 @@ class MLPBaseline:
                 predictions = self.model(featmat_var).data.numpy().ravel()
             errors = returns.ravel() - predictions
             error_before = np.sum(errors**2)/(np.sum(returns**2) + 1e-8)
+            print ("Error before: ", error_before)
 
         for ep in range(self.epochs):
             rand_idx = np.random.permutation(num_samples)
@@ -93,7 +113,12 @@ class MLPBaseline:
                 yhat = self.model(batch_x)
                 loss = self.loss_function(yhat, batch_y)
                 loss.backward()
-                self.optimizer.step()
+
+                if self.use_gauss_newton:
+                    closure = loss_closure(self.model, batch_x, batch_y, self.loss_function)
+                    self.optimizer.step(closure)
+                else:
+                    self.optimizer.step()
 
         if return_errors:
             if self.use_gpu:
@@ -102,6 +127,7 @@ class MLPBaseline:
                 predictions = self.model(featmat_var).data.numpy().ravel()
             errors = returns.ravel() - predictions
             error_after = np.sum(errors**2)/(np.sum(returns**2) + 1e-8)
+            print ("Error after: ", error_after)
             return error_before, error_after
 
     def predict(self, path):

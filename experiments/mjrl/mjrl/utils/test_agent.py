@@ -61,6 +61,7 @@ def build_log_dir(tag, variant):
 
     dir = os.path.join(dir, str(seed))
     return dir
+
 def launch_job(tag, variant):
     seed, env, algo, optim, curv_type, lr, batch_size, cg_iters, cg_residual_tol, cg_prev_init_coef, \
         cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp,  \
@@ -71,7 +72,9 @@ def launch_job(tag, variant):
     save_dir = build_log_dir(tag, variant)
 
     print ("Save: ", save_dir)
-    policy_path = os.path.join(save_dir, 'iterations/best_policy.pickle')
+    save_dir = "/Users/trevorbarron/Documents/dev.nosync/thesis/adacurv/experiments/mjrl/results_serv/"
+    policy_path = os.path.join(save_dir, 'best_policy.pickle')
+    # policy_path = os.path.join(save_dir, 'iterations/best_policy.pickle')
     with open(policy_path, 'rb') as f:
         policy = pickle.load(f)
     print (policy)
