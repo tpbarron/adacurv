@@ -125,7 +125,7 @@ if adangd_noshrinkage_nocgplus:
                          [0],                       # lanzcos_iters
 
                          [False],                   # approx adaptive
-                         [(0.0, 0.0)],              # betas
+                         betas,              # betas
                          use_nn_policy,             # use nn
                          gn_vfn_opt,                # whether to optimizer val func with GN
                          [total_samples])           # total steps
@@ -155,7 +155,7 @@ if adangd_noshrinkage_yescgplus:
                          [0],                       # lanzcos_iters
 
                          [False],                   # approx adaptive
-                         [(0.0, 0.0)],              # betas
+                         betas,              # betas
                          use_nn_policy,             # use nn
                          gn_vfn_opt,                # whether to optimizer val func with GN
                          [total_samples])           # total steps
@@ -212,7 +212,7 @@ if adangd_yesshrinkage_yescgplus:
                          [0],                       # lanzcos_amortization
                          [0],                       # lanzcos_iters
                          [False],                   # approx adaptive
-                         [(0.0, 0.0)],              # betas
+                         betas,              # betas
                          use_nn_policy,             # use nn
                          gn_vfn_opt,                # whether to optimizer val func with GN
                          [total_samples])           # total steps
