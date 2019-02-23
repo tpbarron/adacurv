@@ -61,7 +61,7 @@ def build_log_dir(tag, variant):
     if gn_vfn_opt:
         dir = os.path.join(dir, "gn_vfn_opt")
     else:
-        dir = os.path.join(dir, "gn_adam_opt")
+        dir = os.path.join(dir, "adam_vfn_opt")
 
     dir = os.path.join(dir, "total_samples_"+str(total_samples))
     dir = os.path.join(dir, "batch_size_"+str(batch_size))

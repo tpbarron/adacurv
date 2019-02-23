@@ -47,7 +47,8 @@ class MLPBaseline:
 
         if self.use_gauss_newton:
             import fisher.optim as fisher_optim
-            self.optimizer = fisher_optim.NaturalAdam(self.model.parameters(), curv_type='gauss_newton', lr=learn_rate)
+            self.optimizer = fisher_optim.NGD(self.model.parameters(), curv_type='gauss_newton', lr=learn_rate)
+            #self.optimizer = fisher_optim.NaturalAdam(self.model.parameters(), curv_type='gauss_newton', lr=learn_rate, betas=(0.1, 0.1))
         else:
             self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learn_rate, weight_decay=reg_coef)
         self.loss_function = torch.nn.MSELoss()
