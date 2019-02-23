@@ -13,7 +13,8 @@ import torch.autograd
 from torch.autograd import Variable
 import torch.nn.functional as F
 
-from fisher.optim.hvp_utils import build_Fvp, mean_kl_multinomial, eval_F
+# from fisher.optim.hvp_utils import build_Fvp, mean_kl_multinomial, eval_F, eval_H
+from fisher.optim.hvp_utils import eval_F, mean_kl_multinomial
 from fisher.utils import lanczos
 
 class Model(nn.Module):
@@ -23,7 +24,7 @@ class Model(nn.Module):
         self.fc = nn.Linear(p, 1, bias=False)
 
     def forward(self, X):
-        print (X.shape)
+        # print (X.shape)
         y = self.fc(X)
         return torch.sigmoid(y)
 
@@ -36,7 +37,7 @@ class Model(nn.Module):
 #                            random_state=0)
 #     return X, y
 
-def generate_data(n=1000, d=50):
+def generate_data(n=1000, d=50, seed=0):
     X, y = make_classification(n_samples=n,
                                n_features=d,
                                n_informative=d,
@@ -48,9 +49,9 @@ def generate_data(n=1000, d=50):
                                class_sep=1.0,
                                hypercube=True,
                                shift=0.0,
-                               scale=5.0,
+                               scale=1.0,
                                shuffle=True,
-                               random_state=int(sys.argv[1]))
+                               random_state=seed)
     return X, y
 
 def plot_contours(Xdata, ydata, model, loss_fn, traces=None):
@@ -123,108 +124,91 @@ def plot_contours(Xdata, ydata, model, loss_fn, traces=None):
 
 def fit(data, full_data, p=20):
     model = Model(p)
-    algos = ['ngd'] #'sgd', 'natural_adagrad', 'natural_adam', 'natural_amsgrad', 'ngd']
 
-    trace_dict = {}
-    for algo in algos:
+    import fisher.optim as fisher_optim
+    opt = fisher_optim.NGD(model.parameters(), curv_type='fisher', lr=0.01)
 
-        if algo in ['ngd', 'natural_amsgrad', 'natural_adagrad', 'natural_adam']:
-            import fisher.optim as fisher_optim
-            if algo == 'ngd':
-                opt = fisher_optim.NGD(model.parameters(),
-                                       lr=0.01,
-                                       shrunk=False,
-                                       lanczos_iters=1,
-                                       batch_size=1000)
-            elif algo == 'natural_adam':
-                opt = fisher_optim.NaturalAdam(model.parameters(),
-                                               lr=0.01,
-                                               shrunk=False,
-                                               lanczos_iters=0,
-                                               batch_size=1000,
-                                               betas=(0.1, 0.1),
-                                               assume_locally_linear=False)
-            elif algo == 'natural_amsgrad':
-                opt = fisher_optim.NaturalAmsgrad(model.parameters(),
-                                               lr=0.01,
-                                               shrunk=False,
-                                               lanczos_iters=0,
-                                               batch_size=1000,
-                                               betas=(0.1, 0.1),
-                                               assume_locally_linear=False)
-            elif algo == 'natural_adagrad':
-                opt = fisher_optim.NaturalAdagrad(model.parameters(),
-                                               lr=0.01,
-                                               shrunk=False,
-                                               lanczos_iters=0,
-                                               batch_size=1000,
-                                               assume_locally_linear=False)
-        else:
-            opt = optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
 
-        loss_fn = torch.nn.BCELoss()
-        # model.fc.weight.data = torch.FloatTensor([[-7.5, 7.5]])
-        X, y = data
-        bs, dim = X.shape
+    loss_fn = torch.nn.BCELoss()
+    # model.fc.weight.data = torch.FloatTensor([[-7.5, 7.5]])
+    X, y = data
+    bs, dim = X.shape
 
-        Xfull, yfull = full_data
-        Xvarfull = Variable(torch.from_numpy(Xfull)).float()
-        yvarfull = Variable(torch.from_numpy(yfull)).float()
-        Hfull = eval_F(model, Xvarfull, yvarfull, mean_kl_multinomial, damping=0.0)
+    Xfull, yfull = full_data
+    Xvarfull = Variable(torch.from_numpy(Xfull)).float()
+    yvarfull = Variable(torch.from_numpy(yfull)).float()
 
-        trace = [tuple(model.fc.weight.data.numpy().squeeze())]
+    # opt.zero_grad()
+    # output = model(Xvarfull)
+    # loss = loss_fn(output, yvarfull.reshape_as(output))
+    # Hfull = eval_F(model.parameters(), loss) # Xvarfull, yvarfull, mean_kl_multinomial, damping=0.0)
+    Hfull = eval_F(model, Xvarfull, yvarfull, mean_kl_multinomial, damping=0.0).numpy()
 
-        for iter in range(20):
-            Xvar = Variable(torch.from_numpy(X)).float()
-            yvar = Variable(torch.from_numpy(y)).float()
+    trace = [tuple(model.fc.weight.data.numpy().squeeze())]
 
-            opt.zero_grad()
+    for iter in range(20):
+        Xvar = Variable(torch.from_numpy(X)).float()
+        yvar = Variable(torch.from_numpy(y)).float()
 
-            output = model(Xvar)
-            loss = loss_fn(output, yvar.reshape_as(output))
-            loss.backward()
+        opt.zero_grad()
 
-            if algo in ['ngd', 'natural_amsgrad', 'natural_adagrad', 'natural_adam']:
-                H = eval_F(model, Xvar, yvar, mean_kl_multinomial, damping=0.0)
-                w, v = np.linalg.eig(H)
-                # print ("Eigs vs trace: ", w, np.sum(w), np.trace(H))
-                rho, D = lanczos.estimate_shrinkage(w, dim, bs)
-                # print ("Hess: ", H)
-                print ("D, rho: ", D, rho)
-                # print ("True D: ", np.trace(H) / 2)
-                Hshrunk = (1-rho)*H + rho * np.eye(dim)*D
-                # print ("Hshrunk: ", Hshrunk)
-                diff_shrunk = np.linalg.norm(Hshrunk-Hfull, 'fro')
-                diff_sample = np.linalg.norm(H-Hfull, 'fro')
-                print ("Diff shrunk/sample: ", diff_shrunk, diff_sample, diff_shrunk < diff_sample, diff_sample - diff_shrunk)
-                return diff_shrunk, diff_sample
-                Fvp_fn = build_Fvp(model, Xvar, yvar, mean_kl_multinomial)
-                opt.step(Fvp_fn)
-            else:
-                opt.step()
+        # output = model(Xvar)
+        # loss = loss_fn(output, yvar.reshape_as(output))
+        # loss.backward()
 
-            trace.append(tuple(model.fc.weight.data.numpy().squeeze()))
-            print (loss)
+        # H = eval_H(model.parameters(), loss) #, Xvar, yvar, mean_kl_multinomial, damping=0.0)
+        H = eval_F(model, Xvar, yvar, mean_kl_multinomial, damping=0.0).numpy()
+        w, v = np.linalg.eig(H)
+        # print ("Eigs vs trace: ", w, np.sum(w), np.trace(H))
+        rho, D = lanczos.estimate_shrinkage(w, dim, bs)
+        # print ("Hess: ", H)
+        # print ("D, rho: ", D, rho)
+        # print ("True D: ", np.trace(H) / 2)
+        Hshrunk = (1-rho)*H + rho * np.eye(dim)*D
 
-        trace_dict[algo] = trace
+        w1_true = np.linalg.eig(Hfull)[0][0]
+        w1_sample = w[0]
+        w1_shrunk = np.linalg.eig(Hshrunk)[0][0]
 
-    plot_contours(X, y, model, loss_fn, traces=trace_dict)
+        # print ("Hshrunk: ", Hshrunk)
+        diff_shrunk = np.linalg.norm(Hshrunk-Hfull, 'fro')
+        diff_sample = np.linalg.norm(H-Hfull, 'fro')
+
+        diff_shrunk_eig = np.abs(w1_true - w1_shrunk)
+        diff_sample_eig = np.abs(w1_true - w1_sample)
+
+        print ("Diff shrunk/sample fro: ", diff_shrunk, diff_sample, diff_shrunk < diff_sample, diff_sample - diff_shrunk)
+        print ("Diff shrunk/sample eig: ", diff_shrunk_eig, diff_sample_eig, diff_shrunk_eig < diff_sample_eig, diff_sample_eig - diff_shrunk_eig)
+        return diff_shrunk_eig, diff_sample_eig
+
+    trace_dict[algo] = trace
+
+    # plot_contours(X, y, model, loss_fn, traces=trace_dict)
 
 
 if __name__ == "__main__":
 
+    seeds = list(range(10))
     bs = [5, 10, 100, 250, 500, 1000]
+    ps = [25, 50, 100]
     np.save("bs.npy", np.array(bs))
-    for p in [25, 50, 100]: #[10, 20, 25, 50, 100]:
-        diffs_shrunk = []
-        diffs_sample = []
-        for i in bs:
-            print ("bs: ", i)
-            X, y = generate_data(n=i, d=p)
-            Xfull, yfull = generate_data(n=1000000, d=p)
-            diff_shrunk, diff_sample = fit((X, y), (Xfull, yfull), p)
-            diffs_shrunk.append(diff_shrunk)
-            diffs_sample.append(diff_sample)
 
-        np.save('diffs_shrunk_p'+str(p)+'.npy', np.array(diffs_shrunk))
-        np.save('diffs_sample_p'+str(p)+'.npy', np.array(diffs_sample))
+    diffs_shrunk = np.empty((len(seeds), len(ps), len(bs)))
+    diffs_sample = np.empty((len(seeds), len(ps), len(bs)))
+
+    for si in range(len(seeds)):
+        s = seeds[si]
+        for pi in range(len(ps)):
+            p = ps[pi]
+            for bi in range(len(bs)):
+                b = bs[bi]
+                print ("seed=", s, ", p=", p, ", batch=", b)
+                X, y = generate_data(n=b, d=p, seed=s)
+                Xfull, yfull = generate_data(n=100000, d=p, seed=s)
+                diff_shrunk, diff_sample = fit((X, y), (Xfull, yfull), p)
+
+                diffs_shrunk[si,pi,bi] = diff_shrunk
+                diffs_sample[si,pi,bi] = diff_sample
+
+    np.save('diffs_shrunk_noise1.npy', diffs_shrunk)
+    np.save('diffs_sample_noise1.npy', diffs_sample)
