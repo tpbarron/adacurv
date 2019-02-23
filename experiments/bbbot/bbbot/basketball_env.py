@@ -272,9 +272,9 @@ class BasketballEnv(gym.Env):
             if self.delay:
                 time.sleep(1./240.)
         if self.ball_caught():
-            print ("-----------")
+            # print ("-----------")
             print ("Ball caught")
-            print ("-----------")
+            # print ("-----------")
             return 1000.0
         elif self.ball_on_cyl():
             # print ("-----------")
@@ -313,7 +313,7 @@ class BasketballEnv(gym.Env):
         # input("")
         thrown = self.ball_has_left_gripper()
         if thrown:
-            # print ("Ball left gripper" )
+            print ("Ball left gripper on step", self.n_step)
             self.robot.zero_control()
             rew = self.complete_trajectory()
         else:

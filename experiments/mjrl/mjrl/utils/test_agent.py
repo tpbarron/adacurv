@@ -72,7 +72,7 @@ def launch_job(tag, variant):
     save_dir = build_log_dir(tag, variant)
 
     print ("Save: ", save_dir)
-    save_dir = "/Users/trevorbarron/Documents/dev.nosync/thesis/adacurv/experiments/mjrl/results_serv/"
+    save_dir = "/Users/trevorbarron/Documents/dev.nosync/thesis/adacurv/experiments/mjrl/results/results_serv/"
     policy_path = os.path.join(save_dir, 'best_policy.pickle')
     # policy_path = os.path.join(save_dir, 'iterations/best_policy.pickle')
     with open(policy_path, 'rb') as f:

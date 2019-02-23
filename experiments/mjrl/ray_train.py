@@ -186,8 +186,8 @@ if __name__ == "__main__":
     # variant = [1, 'BasketballEnv-v0', 'trpo', 'natural_adam', False, 0, 5000, 0.0, False, (0.1, 0.1), True, 1000000]
 
     # # seed, envs, alg, optim, curv_type, lr, batch size, cg_iters, cg_residual_tol, cg_prev_init_coef, cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp
-    # shrinkage_methodm, lanzcos_amortization, lanzcos_iters,  approx adaptive, betas, use nn, total_samples
-    variant = [1, 'BasketballEnvRandomHoop-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 5000, 10, 1e-10, 0.0, False, 0.0, 0.0, None, 0, 0, False, (0.1, 0.1), True, False, 1000000]
+    # shrinkage_methodm, lanzcos_amortization, lanzcos_iters,  approx adaptive, betas, use nn, use gn_vfn_opt, total_samples
+    variant = [1, 'BasketballEnvRandomHoop-v0', 'trpo', 'natural_adam', 'fisher', 0.0, 1000, 10, 1e-10, 0.5, True, 0.001, 0.75, None, 0, 0, False, (0.1, 0.1), True, False, 1000000]
 
     # tag = 'test'
     # # 18.96 ngd- no shrink

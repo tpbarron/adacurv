@@ -52,7 +52,7 @@ class BasketballRobot:
         pb.setJointMotorControlArray(self.robot, self.joint_indices_left, pb.VELOCITY_CONTROL, targetVelocities=z, physicsClientId=self.pb_client_id)
         pb.setJointMotorControlArray(self.robot, self.joint_indices_right, pb.VELOCITY_CONTROL, targetVelocities=z, physicsClientId=self.pb_client_id)
 
-    def act(self, u, mode=pb.VELOCITY_CONTROL, action_repeat=10):
+    def act(self, u, mode=pb.VELOCITY_CONTROL, action_repeat=5):
         """
         u should be a vector of inputs for the left arm, will be mirrors on the right
         """

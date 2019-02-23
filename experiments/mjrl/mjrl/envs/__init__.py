@@ -19,26 +19,26 @@ register(
 register(
     id='BasketballEnv-v0',
     entry_point='bbbot.basketball_env:BasketballEnv',
-    max_episode_steps=250,
+    max_episode_steps=50,
 )
 
 register(
     id='BasketballEnvRendered-v0',
     entry_point='bbbot.basketball_env:BasketballEnvRendered',
-    max_episode_steps=250,
+    max_episode_steps=50,
 )
 
 
 register(
     id='BasketballEnvRandomHoop-v0',
     entry_point='bbbot.basketball_env:BasketballEnvRandomHoop',
-    max_episode_steps=250,
+    max_episode_steps=50,
 )
 
 register(
     id='BasketballEnvRandomHoopRendered-v0',
     entry_point='bbbot.basketball_env:BasketballEnvRandomHoopRendered',
-    max_episode_steps=250
+    max_episode_steps=50
 )
 
 
