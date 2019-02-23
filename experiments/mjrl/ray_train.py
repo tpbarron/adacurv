@@ -90,6 +90,7 @@ def launch_job(tag, variant):
     else:
         policy = LinearPolicy(e.spec, seed=seed)
     vfn_batch_size = 256 if gn_vfn_opt else 64
+    vfn_epochs = 2 if gn_vfn_opt else 2
     # baseline = MLPBaseline(e.spec, reg_coef=1e-3, batch_size=64, epochs=2, learn_rate=1e-3)
     baseline = MLPBaseline(e.spec, reg_coef=1e-3, batch_size=vfn_batch_size, epochs=2, learn_rate=1e-3, use_gauss_newton=gn_vfn_opt)
     # agent = NPG(e, policy, baseline, normalized_step_size=0.005, seed=SEED, save_logs=True)
