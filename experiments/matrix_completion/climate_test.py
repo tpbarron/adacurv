@@ -94,17 +94,13 @@ if __name__ == "__main__":
     # B is (n x r)
     # So A @ B.T is (m x n)
 
-    from scipy.io import loadmat
-    jester = loadmat('data/lrmf-datasets/Jester_1/jester_1.mat')
-    print (jester['M'].shape)
-    print (jester['W'].shape)
+    M = np.load("data/climate_data/matrices/M_1900_2100_rcp26.npy")
+    W = np.load("data/climate_data/matrices/W_1900_2100_rcp26.npy")
 
-    # 100 jokes from 24983 users
-    M = np.nan_to_num(jester['M'] / 10.0, 0.0)
-    W = jester['W']
 
-    bs = 5000
+    bs = 1000
     n_samples = np.count_nonzero(W)
+    print ("num sampes: ", n_samples)
     Wind = np.nonzero(W)
     Wind = randomize_windices(Wind)
     n_batches = int(np.ceil(n_samples / bs))
@@ -121,10 +117,10 @@ if __name__ == "__main__":
     print ("r, m, n: ", r, m, n)
     print ("A, B: ", fac.A.shape, fac.B.shape)
 
-    gn = False
+    gn = True
     if gn:
         # optA = fisher_optim.NGD([fac.A, fac.B],
-        #                        lr=0.001,
+        #                        lr=0.01,
         #                        curv_type='gauss_newton',
         #                        shrinkage_method=None, #'cg', #'lanzcos',
         #                        lanczos_iters=0,
@@ -136,21 +132,21 @@ if __name__ == "__main__":
         #                        lanczos_iters=0,
         #                        batch_size=bs)
         optA = fisher_optim.NaturalAdam([fac.A, fac.B],
-                                         lr=0.001,
+                                         lr=0.01,
                                          curv_type='gauss_newton',
                                          shrinkage_method=None,
                                          batch_size=bs,
-                                         betas=(0.9, 0.99),
+                                         betas=(0.1, 0.1),
                                          assume_locally_linear=True)
-        optB = fisher_optim.NaturalAdam([fac.B],
-                                         lr=0.001,
-                                         curv_type='gauss_newton',
-                                         shrinkage_method=None,
-                                         batch_size=bs,
-                                         betas=(0.9, 0.9),
-                                         assume_locally_linear=True)
+        # optB = fisher_optim.NaturalAdam([fac.B],
+        #                                  lr=0.001,
+        #                                  curv_type='gauss_newton',
+        #                                  shrinkage_method=None,
+        #                                  batch_size=bs,
+        #                                  betas=(0.9, 0.9),
+        #                                  assume_locally_linear=True)
     else:
-        optA = optim.Adam([fac.A, fac.B], lr=0.001)
+        optA = optim.Adam([fac.A, fac.B], lr=0.01)
         # optB = optim.Adam([fac.B], lr=0.001)
 
     P = fac(ids=Wind)
@@ -163,7 +159,7 @@ if __name__ == "__main__":
 
     input("Start training?")
 
-    for i in range(6):
+    for i in range(150):
         Wind = randomize_windices(Wind)
         for j in range(n_batches):
 
