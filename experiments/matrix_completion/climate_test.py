@@ -12,8 +12,8 @@ class Factorization(nn.Module):
 
     def __init__(self, m, n, r):
         super(Factorization, self).__init__()
-        self.A = nn.Parameter(torch.randn(m, r) * 0.01)
-        self.B = nn.Parameter(torch.randn(n, r) * 0.01)
+        self.A = nn.Parameter(torch.rand(m, r) * 0.1)
+        self.B = nn.Parameter(torch.rand(n, r) * 0.1)
 
     def forward(self, ids=None):
         if ids is not None:
@@ -28,6 +28,7 @@ class Factorization(nn.Module):
 
 def mat_completion_loss(W, M, P, A, B, ids, lmda1=0.001, lmda2=0.001):
     # e = torch.norm(W[ids] * (M[ids] - P[ids]), 'fro') #** 2.0
+    # print ("W: ", W.shape, W[ids].shape, P.shape)
     e = torch.norm(W[ids] * (M[ids] - P), 'fro') ** 2.0
     regu = lmda1 * torch.norm(A, 'fro') ** 2.0 + lmda2 * torch.norm(B, 'fro') ** 2.0
     # regu = lmda1 * torch.norm(A, 'fro') + lmda2 * torch.norm(B, 'fro')
@@ -89,16 +90,22 @@ def randomize_windices(W):
     return Windx, Windy
 
 if __name__ == "__main__":
+    seed = 0
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
     # M in (m x n) of rank r
     # A is (m x r)
     # B is (n x r)
     # So A @ B.T is (m x n)
 
-    M = np.load("data/climate_data/matrices/M_1900_2100_rcp26.npy")
-    W = np.load("data/climate_data/matrices/W_1900_2100_rcp26.npy")
+    rcp = 'rcp45'
+    M = np.load("data/climate_data/matrices/M_1900_2101_"+rcp+".npy")
+    W = np.load("data/climate_data/matrices/W_1900_2101_"+rcp+".npy")
+    # W[0:18,:] *= 0.1
+    # W[18:,:] *= 10.
 
-
-    bs = 1000
+    bs = 2500
     n_samples = np.count_nonzero(W)
     print ("num sampes: ", n_samples)
     Wind = np.nonzero(W)
@@ -106,7 +113,7 @@ if __name__ == "__main__":
     n_batches = int(np.ceil(n_samples / bs))
     print ("n_batches: ", n_batches)
 
-    r = 10
+    r = 5
     m = M.shape[0]
     n = M.shape[1]
     M = torch.from_numpy(M).float()
@@ -132,7 +139,7 @@ if __name__ == "__main__":
         #                        lanczos_iters=0,
         #                        batch_size=bs)
         optA = fisher_optim.NaturalAdam([fac.A, fac.B],
-                                         lr=0.01,
+                                         lr=0.01, #lr=0.01,
                                          curv_type='gauss_newton',
                                          shrinkage_method=None,
                                          batch_size=bs,
@@ -158,8 +165,12 @@ if __name__ == "__main__":
     # scheduler = LambdaLR(opt, lr_lambda=[lambda_lr])
 
     input("Start training?")
+    best_error = float(init_error)
 
-    for i in range(150):
+    from torch.optim.lr_scheduler import ReduceLROnPlateau
+    scheduler = ReduceLROnPlateau(optA, 'min')
+
+    for i in range(250):
         Wind = randomize_windices(Wind)
         for j in range(n_batches):
 
@@ -191,8 +202,12 @@ if __name__ == "__main__":
                 print ("Iter: ", i, ", batch: ", j, float(error) / P.shape[0])
 
         P = fac(Wind)
-        error = mat_completion_loss(W, M, P, fac.A, fac.B, Wind)
-        print ("Iter: ", i, float(error) / P.shape[0])
+        error = float(mat_completion_loss(W, M, P, fac.A, fac.B, Wind))
+        print ("Iter: ", i, error / P.shape[0])
+        scheduler.step(error)
 
-
-        # # scheduler.step()
+        if error < best_error:
+            P2 = fac()
+            gn_str = 'gn' if gn else 'adam'
+            np.save('models/P_'+rcp+'_rank'+str(r)+'_'+gn_str+'.npy', P2.data.numpy())
+            best_error = error
