@@ -7,20 +7,21 @@ import mnist
 ray.init(num_cpus=20)
 
 baselines = False
-basic_fisher = False
+basic_fisher = True
 basic_gauss_newton = False
 fisher_shrunk = False
 fisher_precondition = False
 fisher_momentum = False
 fisher_all_no_shrunk = True
 #gauss_newton_all_no_shrunk = True
-fisher_all = False
+fisher_all = True
 gauss_newton_all = False
 
 ###
 # Common params
 ###
 
+global_tag = 'mnist_shrinkage_rerun'
 seeds = list(range(1))
 global_lrs = [0.001]
 batch_sizes = [125, 250, 500, 1000]
@@ -96,7 +97,7 @@ all_variants = []
 ###
 
 if baselines:
-    tag = 'baselines'
+    tag = global_tag if global_tag is not None else 'baselines'
     lrs = [0.01, 0.005, 0.001]
     variants1 = product([tag],
                         seeds,
@@ -128,7 +129,7 @@ if baselines:
 ###
 
 if basic_fisher:
-    tag = 'basic_fisher'
+    tag = global_tag if global_tag is not None else 'basic_fisher'
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
@@ -155,7 +156,7 @@ if basic_fisher:
 ###
 
 if basic_gauss_newton:
-    tag = 'basic_gauss_newton'
+    tag = global_tag if global_tag is not None else 'basic_gauss_newton'
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
@@ -182,7 +183,7 @@ if basic_gauss_newton:
 ###
 
 if fisher_shrunk:
-    tag = 'fisher_shrunk'
+    tag = global_tag if global_tag is not None else 'fisher_shrunk'
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
@@ -209,7 +210,7 @@ if fisher_shrunk:
 ###
 
 if fisher_precondition:
-    tag = 'fisher_precondition'
+    tag = global_tag if global_tag is not None else 'fisher_precondition'
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
@@ -236,7 +237,7 @@ if fisher_precondition:
 ###
 
 if fisher_momentum:
-    tag = 'fisher_momentum'
+    tag = global_tag if global_tag is not None else 'fisher_momentum'
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
@@ -266,7 +267,7 @@ if fisher_momentum:
 global_betas = [(0.1, 0.1), (0.9, 0.9)]
 
 if fisher_all:
-    tag = 'fisher_all'
+    tag = global_tag if global_tag is not None else 'fisher_all'
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
@@ -289,31 +290,31 @@ if fisher_all:
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
 if fisher_all_no_shrunk:
-    tag = 'fisher_gn_all_no_shrunk'
+    tag = global_tag if global_tag is not None else 'fisher_gn_all_no_shrunk'
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
                         ['fisher', 'gauss_newton'],                                                             # curv_type
                         global_lrs,                                                             # lr
-                        batch_sizes,                                                            # batch size                                                                                               
-                        [10],                                                                   # cg_iters                                                                                                 
-                        [0.5],                                                                  # cg_prev_init_coef                                                                                        
-                        [True],                                                                 # cg_precondition_empirical                                                                                
-                        [0.001],                                                                # cg_precondition_regu_coef                                                                                
-                        [0.75],                                                                 # cg_precondition_exp                                                                                      
-                        [None],                                                      # shrinkage_method                                                                                          
-                        [0],                                                                   # lanzcos_amortization                                                                                      
-                        [0],                                                                   # lanzcos_iters                                                                                             
-                        global_betas,                                                           # betas                                                                                                    
-                        [False])                                                                # approx adaptive                                                                                          
+                        batch_sizes,                                                            # batch size
+                        [10],                                                                   # cg_iters
+                        [0.5],                                                                  # cg_prev_init_coef
+                        [True],                                                                 # cg_precondition_empirical
+                        [0.001],                                                                # cg_precondition_regu_coef
+                        [0.75],                                                                 # cg_precondition_exp
+                        [None],                                                      # shrinkage_method
+                        [0],                                                                   # lanzcos_amortization
+                        [0],                                                                   # lanzcos_iters
+                        global_betas,                                                           # betas
+                        [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
     print (len(variants1))
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
-    
+
 # Gauss Newton all
 if gauss_newton_all:
-    tag = 'gauss_newton_all'
+    tag = global_tag if global_tag is not None else 'gauss_newton_all'
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
