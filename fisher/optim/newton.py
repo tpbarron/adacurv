@@ -16,7 +16,7 @@ class Newton(Optimizer):
                  params,
                  betas=(0.9, 0.9),
                  lr=required,
-                 shrunk=True,
+                 shrunk=False,
                  batch_size=200,
                  adaptive=False,
                  Q=None):
@@ -35,7 +35,8 @@ class Newton(Optimizer):
             raise ValueError("NGD-CG doesn't support per-parameter options (parameter groups)")
 
         self.adaptive = adaptive
-        self.Q = torch.from_numpy(Q).float()
+        if Q is not None:
+            self.Q = torch.from_numpy(Q).float()
 
         self._param_group = self.param_groups[0]
         self._params = self._param_group['params']
@@ -49,7 +50,7 @@ class Newton(Optimizer):
             self._numel_cache = reduce(lambda total, p: total + p.numel(), self._params, 0)
         return self._numel_cache
 
-    def H(self, parameters, loss, damping=1e-4):
+    def H(self, parameters, loss): #, damping=1e-4):
         import torch.autograd as autograd
 
         loss_grad = autograd.grad(loss, parameters, create_graph=True)
@@ -87,6 +88,8 @@ class Newton(Optimizer):
         # Get flat grad
         g = gradients_to_vector(self._params)
 
+        # shrunk = self._param_group['shrunk']
+
         # Compute Fisher
         Gt = self.H(self._params, loss)
 
@@ -105,22 +108,17 @@ class Newton(Optimizer):
             Ft_hat = Ft / bias_correction2
 
             ng = torch.pinverse(Ft_hat) @ g_hat
-            # alpha = float(ng.dot(ng) / (ng.view(-1, 1).t() @ Ft_hat @ ng.view(-1, 1)))
+            H = Ft_hat
+            # alpha = float(torch.sqrt(ng.dot(ng)) / (ng.view(-1, 1).t() @ Ft_hat @ ng.view(-1, 1)))
         else:
             ng = torch.pinverse(Gt) @ g
-            # alpha = float(ng.dot(ng) / (ng.view(-1, 1).t() @ Gt @ ng.view(-1, 1)))
+            H = Gt
+            # alpha = float(torch.sqrt(ng.dot(ng)) / (ng.view(-1, 1).t() @ Gt @ ng.view(-1, 1)))
 
-
-        # alpha = g dot g / (g Q g)
-        # alpha = float(ng.dot(ng) / (ng.view(-1, 1).t() @ self.Q @ ng.view(-1, 1)))
-
-        # alpha = 0.01
-        # print ("Alpha: ", alpha)
-        # input("")
         lr = self._param_group['lr']
-        # Normalize NG
         alpha = torch.sqrt(torch.abs(lr / (torch.dot(g, ng) + 1e-20)))
 
+        # alpha *= 0.1
         # Unflatten grad
         vector_to_gradients(ng, self._params)
 
@@ -131,4 +129,4 @@ class Newton(Optimizer):
             d_p = p.grad.data
             p.data.add_(-alpha, d_p)
 
-        return dict(alpha=alpha) #, delta=lr)
+        return dict(alpha=alpha, H=H.clone()) #, delta=lr)

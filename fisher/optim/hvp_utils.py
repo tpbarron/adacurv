@@ -171,7 +171,7 @@ def GNvp(f, z, x, v):
 # Build true Fisher
 ###
 
-def F(model, inputs, outputs, kl_fn, damping=1e-4):
+def eval_F(model, inputs, outputs, kl_fn, damping=1e-4):
     new_log_probs = model(inputs)
     old_log_probs = torch.clone(new_log_probs).detach()
 
@@ -203,3 +203,23 @@ def build_F(model, inputs, outputs, kl_fn, regu_coef=0.0):
         H = eval_F(*full_inp)
         return H
     return Fvp_fn
+
+
+def eval_H(parameters, loss): #, damping=1e-4):
+    import torch.autograd as autograd
+
+    loss_grad = autograd.grad(loss, parameters, create_graph=True)
+    cnt = 0
+    for g in loss_grad:
+        g_vector = g.contiguous().view(-1) if cnt == 0 else torch.cat([g_vector, g.contiguous().view(-1)])
+        cnt = 1
+    l = g_vector.size(0)
+    hessian = torch.zeros(l, l)
+    for idx in range(l):
+        grad2rd = autograd.grad(g_vector[idx], parameters, create_graph=True)
+        cnt = 0
+        for g in grad2rd:
+            g2 = g.contiguous().view(-1) if cnt == 0 else torch.cat([g2, g.contiguous().view(-1)])
+            cnt = 1
+        hessian[idx] = g2
+    return hessian.cpu().data #.numpy()
