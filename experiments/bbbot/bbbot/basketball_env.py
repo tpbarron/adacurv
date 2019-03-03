@@ -19,6 +19,7 @@ class BasketballEnv(gym.Env):
         else:
             mode = pb.DIRECT
         self.delay = delay
+        self.dt = 1/240.
         self.horizon = horizon
         self.random_hoop = random_hoop
 
@@ -270,7 +271,7 @@ class BasketballEnv(gym.Env):
         for i in range(250):
             pb.stepSimulation(physicsClientId=self.client)
             if self.delay:
-                time.sleep(1./240.)
+                time.sleep(self.dt)
         if self.ball_caught():
             # print ("-----------")
             print ("Ball caught")
@@ -377,7 +378,7 @@ if __name__ == "__main__":
         done = False
         while not done:
             import time
-            time.sleep(1.0/240.0)
+            time.sleep(1.0/480.0)
             pb.stepSimulation()
             # action = np.random.randn(12) * 10.0
             # obs, rew, done, info = env.step(action)

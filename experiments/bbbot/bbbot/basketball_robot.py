@@ -8,6 +8,7 @@ class BasketballRobot:
     def __init__(self, pb_client_id, delay=True):
         self.pb_client_id = pb_client_id
         self.delay = delay
+        self.dt = 1/240.0
 
         self.robot_urdf = os.path.join(os.path.dirname(__file__), 'assets/bbbot_description/urdf/bbbot.urdf')
         self.robot = pb.loadURDF(self.robot_urdf, [0.0, 0.0, 0.0], physicsClientId=self.pb_client_id)
@@ -34,7 +35,7 @@ class BasketballRobot:
         for s in range(100):
             pb.stepSimulation(physicsClientId=self.pb_client_id)
             if self.delay:
-                time.sleep(1./240.)
+                time.sleep(self.dt)
 
     def move_to_pickup_position(self):
         pickup_pos_left = [2.9390760359372385, 1.217528331414226, -0.17592668464016736, 0, 1.2410842115944702, 3.14]
@@ -45,7 +46,7 @@ class BasketballRobot:
         for s in range(100):
             pb.stepSimulation(physicsClientId=self.pb_client_id)
             if self.delay:
-                time.sleep(1./240.)
+                time.sleep(self.dt)
 
     def zero_control(self):
         z = np.zeros((6,))
@@ -100,4 +101,4 @@ class BasketballRobot:
         for s in range(action_repeat):
             pb.stepSimulation(physicsClientId=self.pb_client_id)
             if self.delay:
-                time.sleep(1./240.)
+                time.sleep(self.dt)
