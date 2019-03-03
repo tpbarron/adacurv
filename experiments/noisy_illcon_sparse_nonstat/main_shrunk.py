@@ -13,17 +13,10 @@ class Quadratic:
     def __init__(self, Q, x, v=0):
         self.Q = Q
         self.Qvar = Variable(torch.from_numpy(Q), requires_grad=False).float()
-        self.x_init = x
         self.x = x
-        self.x_target = np.random.normal(self.x.shape)
-        self.shift_vec = 10.0 * (self.x_target - self.x) / np.linalg.norm(self.x_target - self.x)
-        print ("random vec norm: ", np.linalg.norm(self.shift_vec))
-
+        # self.xvar = Variable(torch.from_numpy(x), requires_grad=False).float()
         self.v = v
         self.dim = self.Q.shape[0]
-
-    def shift(self, alpha):
-        self.x = self.x + alpha * self.shift_vec
 
     def sample(self, n=1):
         """
@@ -53,7 +46,6 @@ def train(args, quad):
         opt = optim.SGD([p], lr=0.01)
     else:
         opt = fisher_optim.Newton([p], lr=0.01, adaptive=args.adaptive, Q=quad.Q)
-
     for i in range(args.iters):
         opt.zero_grad()
         data = quad.sample(n=args.batch_size)
@@ -80,9 +72,6 @@ def train(args, quad):
         losses[i,1] = best_loss
         # print ("Loss (", i, ")", l, best_loss)
 
-        if args.nonstat:
-            quad.shift(1.0/(args.iters-1.0))
-
     # print ("Best loss: ", best_loss)
     return losses
 
@@ -105,13 +94,88 @@ def build_log_dir(args):
     else:
         dir = os.path.join(dir, "adaptive_false")
 
-    if args.nonstat:
-        dir = os.path.join(dir, "nonstat_true")
-    else:
-        dir = os.path.join(dir, "nonstat_false")
-
     dir = os.path.join(dir, str(args.seed))
     return dir
+
+
+def compute_true_hessian(args, quad):
+    np.random.seed(1)
+    torch.manual_seed(1)
+    p = torch.nn.Parameter(torch.zeros(args.dimension, 1))
+    opt = fisher_optim.Newton([p], lr=0.01, adaptive=args.adaptive, Q=quad.Q)
+
+    opt.zero_grad()
+    data = quad.sample(n=1000000) #args.batch_size)
+
+    x = Variable(torch.from_numpy(data)).float()
+    l = quad.loss_fn(x, p)
+    l.backward(retain_graph=not args.sgd)
+
+    # Get flat grad
+    g = gradients_to_vector([p])
+    a = torch.empty_like(g).fill_(1.0-args.grad_sparsity)
+    g_sparse = torch.bernoulli(a) * g
+    vector_to_gradients(g_sparse, [p])
+    info = opt.step(l)
+    H = info['H']
+    return H.data.numpy()
+
+def compute_sample_hessian(args, quad):
+    np.random.seed(1)
+    torch.manual_seed(1)
+
+    p = torch.nn.Parameter(torch.zeros(args.dimension, 1))
+    opt = fisher_optim.Newton([p], lr=0.01, adaptive=args.adaptive, Q=quad.Q)
+
+    opt.zero_grad()
+    data = quad.sample(n=args.batch_size)
+    print ("data: ", data.shape)
+
+    x = Variable(torch.from_numpy(data)).float()
+    l = quad.loss_fn(x, p)
+    l.backward(retain_graph=not args.sgd)
+
+    # Get flat grad
+    g = gradients_to_vector([p])
+    a = torch.empty_like(g).fill_(1.0-args.grad_sparsity)
+    g_sparse = torch.bernoulli(a) * g
+    vector_to_gradients(g_sparse, [p])
+    info = opt.step(l)
+    H = info['H']
+
+    return H.data.numpy()
+
+def compute_shrunk_hessian(args, quad):
+    np.random.seed(1)
+    torch.manual_seed(1)
+
+    p = torch.nn.Parameter(torch.zeros(args.dimension, 1))
+    opt = fisher_optim.Newton([p], lr=0.01, adaptive=args.adaptive, Q=quad.Q)
+
+    opt.zero_grad()
+    data = quad.sample(n=args.batch_size)
+
+    x = Variable(torch.from_numpy(data)).float()
+    l = quad.loss_fn(x, p)
+    l.backward(retain_graph=not args.sgd)
+
+    # Get flat grad
+    # g = gradients_to_vector([p])
+    # a = torch.empty_like(g).fill_(1.0-args.grad_sparsity)
+    # g_sparse = torch.bernoulli(a) * g
+    # vector_to_gradients(g_sparse, [p])
+
+    info = opt.step(l)
+    H = info['H']
+    eigs = np.linalg.eigvalsh(H)
+    from fisher.utils.lanczos import lanczos_iteration, estimate_shrinkage
+
+    # print (eigs, len(p))
+    rho, D = estimate_shrinkage(eigs, len(p), args.batch_size)
+    # print ("D: ", D, ", rho:", rho)
+    H = H.data.numpy()
+    Hshrunk = (1-rho) * H + rho * np.eye(len(p)) * D
+    return Hshrunk
 
 
 def launch_job(args):
@@ -121,12 +185,23 @@ def launch_job(args):
     Q, w = quadratic_generator.generate_quadratic(args.condition, args.dimension, args.rotate)
     x = np.random.randn(args.dimension)
     # np.save("eigs_cond_"+str(args.condition)+".npy", w)
-    # input("")
-    quad = Quadratic(Q, x, v=args.noise)
-    # print (Q, Q.shape)
-    # print (quad)
 
-    data = train(args, quad)
+    quad1 = Quadratic(np.copy(Q), x, v=args.noise)
+    quad2 = Quadratic(np.copy(Q), x, v=args.noise)
+    quad_noiseless = Quadratic(np.copy(Q), x, v=0.0)
+
+    Htrue = compute_true_hessian(args, quad_noiseless)
+    print(Htrue.shape)
+    Hsample = compute_sample_hessian(args, quad1)
+    print (Hsample.shape)
+    Hshrunk = compute_shrunk_hessian(args, quad2)
+    print(Hshrunk.shape)
+
+    print ("Sample error: ", np.linalg.norm(Htrue - Hsample))
+    print ("Shrunk error: ", np.linalg.norm(Htrue - Hshrunk))
+
+    input("")
+
     path = build_log_dir(args)
 
     try:
@@ -135,7 +210,7 @@ def launch_job(args):
         pass
 
     print ("Saving to: ", path)
-    np.save(os.path.join(path, 'data.npy'), data)
+    np.save(os.path.join(path, 'shrunk.npy'), data)
 
 if __name__ == "__main__":
 

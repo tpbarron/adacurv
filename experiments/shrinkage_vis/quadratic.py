@@ -160,7 +160,7 @@ def fit(data, full_data, p=20):
         H = eval_F(model, Xvar, yvar, mean_kl_multinomial, damping=0.0).numpy()
         w, v = np.linalg.eig(H)
         # print ("Eigs vs trace: ", w, np.sum(w), np.trace(H))
-        rho, D = lanczos.estimate_shrinkage(w, dim, bs)
+        rho, D = lanczos.estimate_shrinkage_fix(w, dim, bs)
         # print ("Hess: ", H)
         # print ("D, rho: ", D, rho)
         # print ("True D: ", np.trace(H) / 2)
@@ -179,7 +179,7 @@ def fit(data, full_data, p=20):
 
         print ("Diff shrunk/sample fro: ", diff_shrunk, diff_sample, diff_shrunk < diff_sample, diff_sample - diff_shrunk)
         print ("Diff shrunk/sample eig: ", diff_shrunk_eig, diff_sample_eig, diff_shrunk_eig < diff_sample_eig, diff_sample_eig - diff_shrunk_eig)
-        return diff_shrunk_eig, diff_sample_eig
+        return diff_shrunk, diff_sample
 
     trace_dict[algo] = trace
 
@@ -188,7 +188,7 @@ def fit(data, full_data, p=20):
 
 if __name__ == "__main__":
 
-    seeds = list(range(10))
+    seeds = list(range(20))
     bs = [5, 10, 100, 250, 500, 1000]
     ps = [25, 50, 100]
     np.save("bs.npy", np.array(bs))
@@ -210,5 +210,5 @@ if __name__ == "__main__":
                 diffs_shrunk[si,pi,bi] = diff_shrunk
                 diffs_sample[si,pi,bi] = diff_sample
 
-    np.save('diffs_shrunk_noise1.npy', diffs_shrunk)
-    np.save('diffs_sample_noise1.npy', diffs_sample)
+    np.save('diffs_shrunk_noise1_fix.npy', diffs_shrunk)
+    np.save('diffs_sample_noise1_fix.npy', diffs_sample)

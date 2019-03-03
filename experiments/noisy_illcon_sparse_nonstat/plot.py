@@ -59,6 +59,9 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
     except:
         pass
 
+    nonstat = 'true'
+    iters = 100
+
     axes = make_subplots(4, 5)
 
     print (axes)
@@ -102,8 +105,8 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
     axes[0][0].set_title("Eigenvalue distribution")
     axes[0][1].set_title("Noise 0.0, Sparsity 0.0")
     axes[0][2].set_title("Noise 0.0, Sparsity 0.1")
-    axes[0][3].set_title("Noise 1.0, Sparsity 0.0")
-    axes[0][4].set_title("Noise 1.0, Sparsity 0.1")
+    axes[0][3].set_title("Noise 0.4, Sparsity 0.0")
+    axes[0][4].set_title("Noise 0.4, Sparsity 0.1")
 
     axes[3][1].set_xlabel("Steps")
     axes[3][2].set_xlabel("Steps")
@@ -112,17 +115,18 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
 
     i = 1
     for n, s in noise:
-        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_100/dimension_100/condition_1.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_false/adaptive_false/"+str(seed)+"/data.npy"
+        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_"+str(iters)+"/dimension_100/condition_1.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_false/adaptive_false/"+str(seed)+"/data.npy"
         newton = np.load(fname)[:,1]
 
-        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_100/dimension_100/condition_1.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_false/adaptive_true/"+str(seed)+"/data.npy"
+        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_"+str(iters)+"/dimension_100/condition_1.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_false/adaptive_true/"+str(seed)+"/data.npy"
         newton_adap = np.load(fname)[:,1]
 
         ax = axes[0][i]
 
-        ax.semilogy(newton, color='#2F4F4F', label='Newton')
-        ax.semilogy(newton_adap, color='xkcd:fuchsia', ls='dashed', label='AdaCurv\nNewton')
+        ax.semilogy(newton, color='#2F4F4F', ls='dashed', label='Newton', zorder=1000)
+        ax.semilogy(newton_adap, color='xkcd:fuchsia', label='AdaCurv\nNewton')
         ax.tick_params(axis='x', colors='white')
+        ax.set_xlim((0, 100))
 
         if i == 4:
             ax.yaxis.set_label_position("right")
@@ -135,16 +139,17 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
 
     i = 1
     for n, s in noise:
-        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_100/dimension_100/condition_1.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_true/adaptive_false/"+str(seed)+"/data.npy"
+        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_"+str(iters)+"/dimension_100/condition_1.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_true/adaptive_false/"+str(seed)+"/data.npy"
         newton = np.load(fname)[:,1]
 
-        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_100/dimension_100/condition_1.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_true/adaptive_true/"+str(seed)+"/data.npy"
+        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_"+str(iters)+"/dimension_100/condition_1.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_true/adaptive_true/"+str(seed)+"/data.npy"
         newton_adap = np.load(fname)[:,1]
 
         ax = axes[1][i]
-        ax.semilogy(newton, color='#2F4F4F')
-        ax.semilogy(newton_adap, color='xkcd:fuchsia', ls='dashed')
+        ax.semilogy(newton, color='#2F4F4F', ls='dashed', zorder=1000)
+        ax.semilogy(newton_adap, color='xkcd:fuchsia')
         ax.tick_params(axis='x', colors='white')
+        ax.set_xlim((0, 100))
 
         if i == 4:
             ax.yaxis.set_label_position("right")
@@ -154,17 +159,18 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
 
     i = 1
     for n, s in noise:
-        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_100/dimension_100/condition_100.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_false/adaptive_false/"+str(seed)+"/data.npy"
+        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_"+str(iters)+"/dimension_100/condition_100.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_false/adaptive_false/"+str(seed)+"/data.npy"
         newton = np.load(fname)[:,1]
 
-        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_100/dimension_100/condition_100.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_false/adaptive_true/"+str(seed)+"/data.npy"
+        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_"+str(iters)+"/dimension_100/condition_100.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_false/adaptive_true/"+str(seed)+"/data.npy"
         newton_adap = np.load(fname)[:,1]
 
         ax = axes[2][i]
 
-        ax.semilogy(newton, color='#2F4F4F')
-        ax.semilogy(newton_adap, color='xkcd:fuchsia', ls='dashed')
+        ax.semilogy(newton, color='#2F4F4F', ls='dashed', zorder=1000)
+        ax.semilogy(newton_adap, color='xkcd:fuchsia')
         ax.tick_params(axis='x', colors='white')
+        ax.set_xlim((0, 100))
 
         if i == 4:
             ax.yaxis.set_label_position("right")
@@ -175,16 +181,17 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
 
     i = 1
     for n, s in noise:
-        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_100/dimension_100/condition_100.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_true/adaptive_false/"+str(seed)+"/data.npy"
+        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_"+str(iters)+"/dimension_100/condition_100.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_true/adaptive_false/"+str(seed)+"/data.npy"
         newton = np.load(fname)[:,1]
 
-        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_100/dimension_100/condition_100.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_true/adaptive_true/"+str(seed)+"/data.npy"
+        fname = "results/"+str(tag)+"/batch_size_"+str(bs)+"/iters_"+str(iters)+"/dimension_100/condition_100.0/noise_"+str(n)+"/grad_sparsity_"+str(s)+"/rotate_true/adaptive_true/"+str(seed)+"/data.npy"
         newton_adap = np.load(fname)[:,1]
 
         ax = axes[3][i]
-        ax.semilogy(newton, color='#2F4F4F')
-        ax.semilogy(newton_adap, color='xkcd:fuchsia', ls='dashed')
-        ax.set_xticks([0, 50, 100])
+        ax.semilogy(newton, color='#2F4F4F', ls='dashed', zorder=1000)
+        ax.semilogy(newton_adap, color='xkcd:fuchsia')
+        ax.set_xlim((0, 100))
+        # ax.set_xticks([0, 50, 100, 150, 200, 250, 300]) #, 350, 400, 450, 500])
 
         if i == 4:
             ax.yaxis.set_label_position("right")
@@ -208,7 +215,11 @@ def plot(tag='quadratic', bs=10, subtag='test', file='data', seed=0):
 
 
 # f, axes = plt.subplots(1, 4, sharey=True)
+# tag='quadratic_exactstep'
+# tag='quadratic_nonstat'
+# tag='quadratic_comp'
 tag='quadratic'
+
 subtag='test'
 
 # for b, ax in zip(batch_sizes, axes):

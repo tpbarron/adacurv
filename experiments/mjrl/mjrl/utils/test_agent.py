@@ -72,16 +72,25 @@ def launch_job(tag, variant):
     save_dir = build_log_dir(tag, variant)
 
     print ("Save: ", save_dir)
-    save_dir = "/Users/trevorbarron/Documents/dev.nosync/thesis/adacurv/experiments/mjrl/results/results_serv/"
+    save_dir = \
+"/Users/trevorbarron/Documents/dev.nosync/thesis/adacurv/experiments/mjrl/results/final/best_runs/\
+results/pybullet_sample_mode_bball_random_hoop/BasketballEnvRandomHoop-v0/trpo/natural_adam/optim_adaptive/\
+curv_type_fisher/cg_iters_10/cg_residual_tol_1e-10/cg_prev_init_coef_0.5/cg_precondition_empirical_true/\
+cg_precondition_regu_coef_0.001/cg_precondition_exp_0.75/shrunk_true/cg/nn_policy/adam_vfn_opt/\
+total_samples_2000000/batch_size_2000/lr_0.01/betas0.9_0.9/1/iterations/"
+
+    # /Users/trevorbarron/Documents/dev.nosync/thesis/adacurv/experiments/mjrl/results/results_serv_tmp/"
     policy_path = os.path.join(save_dir, 'best_policy.pickle')
     # policy_path = os.path.join(save_dir, 'iterations/best_policy.pickle')
     with open(policy_path, 'rb') as f:
         policy = pickle.load(f)
     print (policy)
 
-    e = GymEnv('BasketballEnvRendered-v0')
+    e = GymEnv('BasketballEnvRandomHoopRendered-v0')
+    e.reset()
+    input("Continue?")
 
-    N = 10
+    N = 15
     T = 250
     paths = base_sampler.do_rollout(N, policy, T, e, None)
     for p in paths:

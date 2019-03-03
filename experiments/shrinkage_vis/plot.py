@@ -28,8 +28,8 @@ fig = plt.figure(figsize=(3.25, 2.5))
 bs = np.load("data/bs.npy")
 print (bs)
 
-diffs_shrunk = np.load('data/diffs_shrunk_noise1.npy')
-diffs_sample = np.load('data/diffs_sample_noise1.npy')
+diffs_shrunk = np.load('data/diffs_shrunk_noise1_fix.npy')
+diffs_sample = np.load('data/diffs_sample_noise1_fix.npy')
 
 print (diffs_shrunk.shape)
 
@@ -38,8 +38,8 @@ shrunk_colors = ['xkcd:dark blue', 'xkcd:blue', 'xkcd:light blue']
 i = 0
 for p in [100, 50, 25]: #, 250]:
 
-    diffs_shrunk_p = diffs_shrunk[:,i,:] #/ p
-    diffs_sample_p = diffs_sample[:,i,:] #/ p
+    diffs_shrunk_p = diffs_shrunk[:,i,:] / p
+    diffs_sample_p = diffs_sample[:,i,:] / p
 
     diffs_shrunk_p = np.mean(diffs_shrunk_p, axis=0)
     diffs_sample_p = np.mean(diffs_sample_p, axis=0)
@@ -51,12 +51,12 @@ for p in [100, 50, 25]: #, 250]:
     i += 1
 
 plt.xlabel("Batch Size")
-plt.ylabel("Fisher Spectral Error")
+plt.ylabel("Fisher Frobenius Error")
 plt.legend()
 plt.tight_layout()
 sns.despine()
 
-plt.savefig("fisher_errors_spectral.pdf", bbox_inches='tight')
+plt.savefig("fisher_errors_fro.pdf", bbox_inches='tight')
 
 
 # sample_colors = ['xkcd:dark orange', 'xkcd:orange', 'xkcd:light orange']

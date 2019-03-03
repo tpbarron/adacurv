@@ -10,14 +10,15 @@ ray.init()
 # Common params
 ###
 
-seeds = list(range(3))
+seeds = list(range(1))
 batch_sizes = [10]
-iters = [100]
-condition = [1.0, 10.0, 100.0]
-noise = [0.4] #[0.0, 1.0, 5.0]
-sparsity = [0.0, 0.1, 0.5]
+iters = [500]
+condition = [1.0, 100.0] #10.0, 100.0]
+noise = [0.0] #0.1] #0.0, 0.4] #[0.0, 1.0, 5.0]
+sparsity = [0.0, 0.1] #, 0.5]
 rotate = [False, True]
 adaptive = [False, True]
+nonstat = True#, True]
 
 ###
 # Ray remote function simply to launch the run
@@ -50,6 +51,7 @@ def run_variants(variants):
         args.grad_sparsity = sparsity
         args.rotate = rotate
         args.adaptive = adaptive
+        args.nonstat = nonstat
 
         args.seed = seed
         args.log_dir = 'results/'+str(tag)
@@ -62,7 +64,7 @@ def run_variants(variants):
 
 
 all_variants = []
-tag = 'quadratic'
+tag = 'quadratic_comp'
 variants1 = product([tag],
                     seeds,
                     batch_sizes,                                # batch size

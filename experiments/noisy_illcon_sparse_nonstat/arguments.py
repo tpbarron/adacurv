@@ -14,6 +14,8 @@ parser.add_argument('--grad-sparsity', type=float, default=0.0,
                     help='gradient sparsity, g_i is set to zero with this probability (default: 0.0)')
 parser.add_argument('--rotate', action='store_true', default=False,
                     help='Rotate the matrix randomly')
+parser.add_argument('--nonstat', action='store_true', default=False,
+                    help='Add non stationarity.')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--log-dir', type=str, default='results/',
