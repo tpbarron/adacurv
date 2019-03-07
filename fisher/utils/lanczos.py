@@ -50,6 +50,8 @@ def lanczos_iteration(Fvp_fn, dim, k=20):
         w = w - alpha * v - beta * v_prev
 
     diag, diag_adj = np.array(diag), np.array(diag_adj)
+    print ("Lanc diag: ", diag)
+    print ("Lanc diag_adj: ", diag_adj)
     w = eigvalsh_tridiagonal(np.array(diag), np.array(diag_adj))
     return w
 
@@ -80,7 +82,8 @@ def estimate_shrinkage_buggy(eigvals, p, batch_size):
 
 
 def estimate_shrinkage(eigvals, p, batch_size):
-    # p = len(eigvals)
+
+    p = len(eigvals)
     # Tr(s) = Sum(\lambda_i)
     trS = np.sum(eigvals)
     # print ("trS: ", trS)
@@ -89,19 +92,21 @@ def estimate_shrinkage(eigvals, p, batch_size):
     tr2S = trS**2.0
     # print ("tr2S: ", tr2S)
 
-    # TODO: optimize this.
-    coef = 0.0
-    for j in range(len(eigvals)):
-        for i in range(j):
-            coef += eigvals[j] * eigvals[i]
-    trS2 = tr2S - 2.0 * coef
+    # # TODO: optimize this.
+    # coef = 0.0
+    # for j in range(len(eigvals)):
+    #     for i in range(j):
+    #         coef += eigvals[j] * eigvals[i]
+    # trS2 = tr2S - 2.0 * coef
+    trS2 = np.sum(eigvals**2.0)
     # print ("trS2: ", trS2)
 
     # print ("numer: ", ((1.0 - 2.0 / p) * trS2 + tr2S))
     # print ("denom: ", ((batch_size + 1 - 2.0 / p) * (trS2 - tr2S / p)) )
 
-    numer = ((1.0 - 2.0) / p * trS2 + tr2S)
-    denom = ((batch_size + 1 - 2.0) / p * (trS2 - tr2S / p))
+    numer = ((1.0 - 2.0) / p) * trS2 + tr2S
+    denom = ((batch_size + 1.0 - 2.0) / p) * (trS2 - (tr2S / p))
+    print (numer, denom, numer / denom)
     rho = min( numer / denom , 1.0)
     diag_shrunk = trS / p
 
