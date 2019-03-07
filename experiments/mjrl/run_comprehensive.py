@@ -8,7 +8,7 @@ import ray_train
 ray.init()
 
 tag = 'pybullet_sample_mode_bullet_shrinkage_rerun'
-envs = ['Walker2DBulletEnv-v0'] #, 'HalfCheetahBulletEnv-v0', 'HopperBulletEnv-v0']
+envs = ['Walker2DBulletEnv-v0', 'HalfCheetahBulletEnv-v0', 'HopperBulletEnv-v0']
 
 seeds = [0, 1, 2]
 algos = ['trpo', 'npg']

@@ -50,8 +50,8 @@ def lanczos_iteration(Fvp_fn, dim, k=20):
         w = w - alpha * v - beta * v_prev
 
     diag, diag_adj = np.array(diag), np.array(diag_adj)
-    print ("Lanc diag: ", diag)
-    print ("Lanc diag_adj: ", diag_adj)
+    # print ("Lanc diag: ", diag)
+    # print ("Lanc diag_adj: ", diag_adj)
     w = eigvalsh_tridiagonal(np.array(diag), np.array(diag_adj))
     return w
 
@@ -106,7 +106,7 @@ def estimate_shrinkage(eigvals, p, batch_size):
 
     numer = ((1.0 - 2.0) / p) * trS2 + tr2S
     denom = ((batch_size + 1.0 - 2.0) / p) * (trS2 - (tr2S / p))
-    print (numer, denom, numer / denom)
+    # print (numer, denom, numer / denom)
     rho = min( numer / denom , 1.0)
     diag_shrunk = trS / p
 

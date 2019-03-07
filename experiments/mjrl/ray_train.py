@@ -152,7 +152,7 @@ def launch_job(tag, variant):
                 num_samples=batch_size,
                 save_freq=5,
                 evaluation_rollouts=5,
-                verbose=True)
+                verbose=False) #True)
 
 if __name__ == "__main__":
     # Test
