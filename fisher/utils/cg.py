@@ -101,7 +101,7 @@ def cg_solve(Fvp_fn,
             break
     if extract_tridiag:
         off_diag_elems = off_diag_elems[0:len(diag_elems)-1]
-        print ("CG diag: ", diag_elems)
-        print ("CG diag_adj: ", off_diag_elems)
+        # print ("CG diag: ", diag_elems)
+        # print ("CG diag_adj: ", off_diag_elems)
         return x, (np.array(diag_elems), np.array(off_diag_elems))
     return x

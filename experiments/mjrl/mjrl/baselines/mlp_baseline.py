@@ -99,7 +99,7 @@ class MLPBaseline:
                 predictions = self.model(featmat_var).data.numpy().ravel()
             errors = returns.ravel() - predictions
             error_before = np.sum(errors**2)/(np.sum(returns**2) + 1e-8)
-            print ("Error before: ", error_before)
+            # print ("Error before: ", error_before)
 
         for ep in range(self.epochs):
             rand_idx = np.random.permutation(num_samples)
@@ -128,7 +128,7 @@ class MLPBaseline:
                 predictions = self.model(featmat_var).data.numpy().ravel()
             errors = returns.ravel() - predictions
             error_after = np.sum(errors**2)/(np.sum(returns**2) + 1e-8)
-            print ("Error after: ", error_after)
+            # print ("Error after: ", error_after)
             return error_before, error_after
 
     def predict(self, path):
