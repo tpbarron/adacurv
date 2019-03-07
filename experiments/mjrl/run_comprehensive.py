@@ -8,7 +8,7 @@ import ray_train
 ray.init()
 
 tag = 'pybullet_sample_mode_bullet_shrinkage_rerun'
-envs = ['Walker2DBulletEnv-v0', 'HalfCheetahBulletEnv-v0', 'HopperBulletEnv-v0']
+envs = ['Walker2DBulletEnv-v0'] #, 'HalfCheetahBulletEnv-v0', 'HopperBulletEnv-v0']
 
 seeds = [0, 1, 2]
 algos = ['trpo', 'npg']
@@ -16,7 +16,7 @@ optims = ['natural_adam'] #, 'natural_amsgrad']
 curv_type = ['fisher']
 
 shrunk_ks = [10]
-batch_sizes = [1000, 2000, 5000]
+batch_sizes = [2500, 5000]
 approx_adaptive = [False]
 betas = [(0.1, 0.1), (0.9, 0.9)]
 lrs = [0.01] # NOTE: if have more than 1 lr, make sure TRPO only runs once!
@@ -24,14 +24,15 @@ use_nn_policy = [True]
 gn_vfn_opt = [False] #, True]
 total_samples = 1000000
 
-cg_iters = 10
+cg_iters = [10]
+cg_residual_tol = [1e-10]
 cg_prev_init_coef = [0.5]
-cg_precondition_empirical = True
-cg_precondition_regu_coef = 0.001
-cg_precondition_exp = 0.75
-shrinkage_method = ['cg']
-lanczos_amortization = 0
-lanczos_iters = 0
+cg_precondition_empirical = [True]
+cg_precondition_regu_coef = [0.001]
+cg_precondition_exp = [0.75]
+shrinkage_method = ['lanczos']
+lanczos_amortization = [1]
+lanczos_iters = [10]
 
 ngd_noshrinkage_nocgplus = False
 ngd_noshrinkage_yescgplus = True
@@ -84,12 +85,12 @@ if ngd_noshrinkage_yescgplus:
                          lrs,
                          batch_sizes,
 
-                         [10],                      # cg_iters
-                         [1e-10],                   # cg_residual_tol
-                         [0.5],                     # cg_prev_init_coef
-                         [True],                   # cg_precondition_empirical
-                         [0.001],                     # cg_precondition_regu_coef
-                         [0.75],                     # cg_precondition_exp
+                         cg_iters,                      # cg_iters
+                         cg_residual_tol,                   # cg_residual_tol
+                         cg_prev_init_coef,                     # cg_prev_init_coef
+                         cg_precondition_empirical,                   # cg_precondition_empirical
+                         cg_precondition_regu_coef,                     # cg_precondition_regu_coef
+                         cg_precondition_exp,                     # cg_precondition_exp
                          [None],                    # shrinkage_method
                          [0],                       # lanzcos_amortization
                          [0],                       # lanzcos_iters
@@ -114,8 +115,8 @@ if adangd_noshrinkage_nocgplus:
                          lrs,
                          batch_sizes,
 
-                         [10],                      # cg_iters
-                         [1e-10],                   # cg_residual_tol
+                         cg_iters,                      # cg_iters
+                         cg_residual_tol,                   # cg_residual_tol
                          [0.0],                     # cg_prev_init_coef
                          [False],                   # cg_precondition_empirical
                          [0.0],                     # cg_precondition_regu_coef
@@ -144,12 +145,12 @@ if adangd_noshrinkage_yescgplus:
                          lrs,
                          batch_sizes,
 
-                         [10],                      # cg_iters
-                         [1e-10],                   # cg_residual_tol
-                         [0.5],                     # cg_prev_init_coef
-                         [True],                   # cg_precondition_empirical
-                         [0.001],                     # cg_precondition_regu_coef
-                         [0.75],                     # cg_precondition_exp
+                         cg_iters,                      # cg_iters
+                         cg_residual_tol,                   # cg_residual_tol
+                         cg_prev_init_coef,                     # cg_prev_init_coef
+                         cg_precondition_empirical,                   # cg_precondition_empirical
+                         cg_precondition_regu_coef,                     # cg_precondition_regu_coef
+                         cg_precondition_exp,                     # cg_precondition_exp
                          [None],                    # shrinkage_method
                          [0],                       # lanzcos_amortization
                          [0],                       # lanzcos_iters
@@ -174,15 +175,15 @@ if ngd_yesshrinkage_yescgplus:
                          lrs,
                          batch_sizes,
 
-                         [10],                      # cg_iters
-                         [1e-10],                   # cg_residual_tol
-                         [0.5],                     # cg_prev_init_coef
-                         [True],                   # cg_precondition_empirical
-                         [0.001],                     # cg_precondition_regu_coef
-                         [0.75],                     # cg_precondition_exp
-                         ['cg'],                    # shrinkage_method
-                         [0],                       # lanzcos_amortization
-                         [0],                       # lanzcos_iters
+                         cg_iters,                      # cg_iters
+                         cg_residual_tol,                   # cg_residual_tol
+                         cg_prev_init_coef,                     # cg_prev_init_coef
+                         cg_precondition_empirical,                   # cg_precondition_empirical
+                         cg_precondition_regu_coef,                     # cg_precondition_regu_coef
+                         cg_precondition_exp,                     # cg_precondition_exp
+                         shrinkage_method,                    # shrinkage_method
+                         lanczos_amortization,                       # lanzcos_amortization
+                         lanczos_iters,                       # lanzcos_iters
 
                          [False],                   # approx adaptive
                          [(0.0, 0.0)],              # betas
@@ -202,15 +203,17 @@ if adangd_yesshrinkage_yescgplus:
                          curv_type,                 # curv_type
                          lrs,
                          batch_sizes,
-                         [10],                      # cg_iters
-                         [1e-10],                   # cg_residual_tol
-                         [0.5],                     # cg_prev_init_coef
-                         [True],                   # cg_precondition_empirical
-                         [0.001],                     # cg_precondition_regu_coef
-                         [0.75],                     # cg_precondition_exp
-                         ['cg'],                    # shrinkage_method
-                         [0],                       # lanzcos_amortization
-                         [0],                       # lanzcos_iters
+
+                         cg_iters,                      # cg_iters
+                         cg_residual_tol,                   # cg_residual_tol
+                         cg_prev_init_coef,                     # cg_prev_init_coef
+                         cg_precondition_empirical,                   # cg_precondition_empirical
+                         cg_precondition_regu_coef,                     # cg_precondition_regu_coef
+                         cg_precondition_exp,                     # cg_precondition_exp
+                         shrinkage_method,                    # shrinkage_method
+                         lanczos_amortization,                       # lanzcos_amortization
+                         lanczos_iters,                       # lanzcos_iters
+
                          [False],                   # approx adaptive
                          betas,              # betas
                          use_nn_policy,             # use nn
@@ -234,8 +237,8 @@ def run(tag, variant, i, n):
     print ("Finished job (" + str(i) + "/" + str(n) + ") with args: ", variant, " in ", (time.time()-ts))
 
 gets = []
+i = 1
 for variant in reversed(all_variants):
-    i = 1
     pid = run.remote(tag, variant, i, num_variants)
     gets.append(pid)
     i += 1

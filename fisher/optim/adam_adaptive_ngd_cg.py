@@ -193,6 +193,9 @@ class NaturalAdam(Optimizer):
             # print ("Computing Lanczos shrinkage at step ", state['step'])
             w = lanczos_iteration(fvp_fn_div_beta2, self._numel(), k=self._param_group['lanczos_iters'])
             rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
+            print ("Lanc eigs: ", w)
+            print ("Lanc shrink (rho, diag): ", rho, diag_shrunk)
+
             state['rho'] = rho
             state['diag_shrunk'] = diag_shrunk
 
@@ -220,7 +223,9 @@ class NaturalAdam(Optimizer):
             # print ("Computing CG shrinkage at step ", state['step'])
             ng, (diag_elems, off_diag_elems) = cg_result
             w = eigvalsh_tridiagonal(diag_elems, off_diag_elems)
+            # print ("CG eigs: ", w)
             rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
+            # print ("CG shrink (rho, diag): ", rho, diag_shrunk)
             state['rho'] = rho
             state['diag_shrunk'] = diag_shrunk
         else:

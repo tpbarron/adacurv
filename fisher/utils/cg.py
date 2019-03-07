@@ -58,10 +58,14 @@ def cg_solve(Fvp_fn,
         p = r.clone()
     rdotr = p.dot(r)
 
+    p_ = r.clone()
+    # rdotr_ = p_.dot(r)
+
     for i in range(cg_iters):
         hvp_p = compute_fvp(Fvp_fn, p, damping, shrunk, rho, Dshrunk)
         z = hvp_p.data
         v = rdotr / p.dot(z)
+        # v_ = rdotr_ / p_.dot(z)
         x += v * p
         r -= v * z
 
@@ -71,10 +75,11 @@ def cg_solve(Fvp_fn,
             s = r
         newrdotr = s.dot(r)
         mu = newrdotr / rdotr
-        p = s + mu * p
-        rdotr = newrdotr
 
         if extract_tridiag:
+            v = rdotr / p.dot(z)
+            # v = r_t M r_t / r_t M F p_t
+            # mu = r_t+1 M r_t+1 / r_t M r_t
             alpha = v
             beta = mu
             term1 = 1.0/alpha
@@ -89,9 +94,14 @@ def cg_solve(Fvp_fn,
             alpha_prev = alpha
             beta_prev = beta
 
+        p = s + mu * p
+        rdotr = newrdotr
+
         if rdotr < cg_residual_tol:
             break
     if extract_tridiag:
         off_diag_elems = off_diag_elems[0:len(diag_elems)-1]
+        print ("CG diag: ", diag_elems)
+        print ("CG diag_adj: ", off_diag_elems)
         return x, (np.array(diag_elems), np.array(off_diag_elems))
     return x
