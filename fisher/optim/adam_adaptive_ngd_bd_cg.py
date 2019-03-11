@@ -172,7 +172,7 @@ class NaturalAdam_BD(Optimizer):
                 state['m'] = torch.zeros(num_params)
                 # Maintain adaptive preconditioner if needed
                 if group['cg_precondition_empirical']:
-                    state['M'] = torch.zeros_like(num_params)
+                    state['M'] = torch.zeros(num_params)
                 # Set shrinkage to defaults, i.e. no shrinkage
                 state['rho'] = 0.0
                 state['diag_shrunk'] = 1.0
