@@ -52,6 +52,17 @@ def make_optimizer(args, model):
                                                  **common_kwargs,
                                                  betas=(args.beta1, args.beta2),
                                                  assume_locally_linear=args.approx_adaptive)
+        elif args.optim == 'natural_adam_bd':
+            block_diag_params = []
+            mods = model.children()
+            for m in mods:
+                print (m)
+                block_diag_params.append({'params': m.parameters()})
+            print (block_diag_params)
+            optimizer = fisher_optim.NaturalAdam_BD(block_diag_params,
+                                                        **common_kwargs,
+                                                        betas=(args.beta1, args.beta2),
+                                                        assume_locally_linear=args.approx_adaptive)
         elif args.optim == 'natural_amsgrad':
             optimizer = fisher_optim.NaturalAmsgrad(model.parameters(),
                                                     **common_kwargs,
@@ -64,4 +75,5 @@ def make_optimizer(args, model):
         else:
             raise NotImplementedError
 
+    print (optimizer)
     return optimizer
