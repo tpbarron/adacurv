@@ -83,12 +83,16 @@ def train(args, model, device, train_loader, test_loader, optimizer, epoch, data
         loss = F.nll_loss(output, target)
         loss.backward()
         if args.optim not in ["sgd", "adam", "rmsprop", "amsgrad", "adagrad"]:
-            if args.curv_type == 'fisher':
-                closure = kl_closure(model, data, target, mean_kl_multinomial)
-                # closure = kl_closure_idx(model, data, target, mean_kl_multinomial)
-            elif args.curv_type == 'gauss_newton':
-                closure = loss_closure(model, data, target, F.nll_loss)
-                # closure = loss_closure_idx(model, data, target, F.nll_loss)
+            if args.optim in ["ngd_bd", "natural_adam_bd"]:
+                if args.curv_type == 'fisher':
+                    closure = kl_closure_idx(model, data, target, mean_kl_multinomial)
+                elif args.curv_type == 'gauss_newton':
+                    closure = loss_closure_idx(model, data, target, F.nll_loss)
+            else:
+                if args.curv_type == 'fisher':
+                    closure = kl_closure(model, data, target, mean_kl_multinomial)
+                elif args.curv_type == 'gauss_newton':
+                    closure = loss_closure(model, data, target, F.nll_loss)                    
             optimizer.step(closure)
         else:
             optimizer.step()

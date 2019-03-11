@@ -16,7 +16,7 @@ from fisher.utils.cg import cg_solve
 from fisher.utils.lanczos import lanczos_iteration, estimate_shrinkage
 from fisher.utils.linesearch import randomized_linesearch, randomized_linesearch_idx
 
-class NaturalAmsgrad_BD(Optimizer):
+class NaturalAdam_BD(Optimizer):
 
     def __init__(self,
                  params,
@@ -68,6 +68,9 @@ class NaturalAmsgrad_BD(Optimizer):
         if curv_type is not required and curv_type not in self.valid_curv_types:
             raise ValueError("Invalid curv_type: " + str(curv_type) + ". Must be one of " + str(valid_curv_types))
 
+        if not assume_locally_linear:
+            raise ValueError("Currently only the approximate adaptive update is implemented.")
+
         defaults = dict(lr=lr,
                         curv_type=curv_type,
                         betas=betas,
@@ -91,7 +94,7 @@ class NaturalAmsgrad_BD(Optimizer):
         if batch_size <= 0:
             raise ValueError("Batch size must be > 0")
 
-        super(NaturalAmsgrad_BD, self).__init__(params, defaults)
+        super(NaturalAdam_BD, self).__init__(params, defaults)
 
         print ("Num param groups:", len(self.param_groups))
         # if len(self.param_groups) != 1:
@@ -150,9 +153,8 @@ class NaturalAmsgrad_BD(Optimizer):
             Fvp_fn (callable): A closure that accepts a vector of parameters and a vector of length
                 equal to the number of model paramsters and returns the Fisher-vector product.
         """
-        info = {}
 
-        # If doing block diag, perform the update for each param group
+        # Update theta old for all blocks first, only approx update is supported
         params_i = 0
         params_j = 0
 
@@ -170,7 +172,7 @@ class NaturalAmsgrad_BD(Optimizer):
                 state['m'] = torch.zeros(num_params)
                 # Maintain adaptive preconditioner if needed
                 if group['cg_precondition_empirical']:
-                    state['M'] = torch.zeros_like(num_params)
+                    state['M'] = torch.zeros(num_params)
                 # Set shrinkage to defaults, i.e. no shrinkage
                 state['rho'] = 0.0
                 state['diag_shrunk'] = 1.0
@@ -178,13 +180,37 @@ class NaturalAmsgrad_BD(Optimizer):
                 for i in range(len(params)):
                     state['lagged'].append(params[i] + torch.randn(params[i].shape) * 0.0001)
 
+            beta1, beta2 = group['betas']
+
+            theta = parameters_to_vector(params)
+            theta_old = parameters_to_vector(state['lagged'])
+
+            # Update theta_old beta2 portion towards theta
+            theta_old = beta2 * theta_old + (1-beta2) * theta
+            vector_to_parameters(theta_old, state['lagged'])
+            # print (theta_old)
+            # input("")
+
+        info = {}
+
+        # If doing block diag, perform the update for each param group
+        params_i = 0
+        params_j = 0
+
+        for gi, group in enumerate(self.param_groups):
+            params = group['params']
+            params_j += len(params)
+
+            num_params = self._numel(gi, params)
+
+            # NOTE: state is initialized above
+            state = self.state[gi]
+
             m = state['m']
             beta1, beta2 = group['betas']
             state['step'] += 1
-            # params_old = state['lagged'] #parameters_to_vector(state['lagged'])
+            params_old = state['lagged'] #
 
-            # params_vec = parameters_to_vector(params)
-            # params_old_vec = parameters_to_vector(params_old)
             bias_correction1 = 1 - beta1 ** state['step']
             bias_correction2 = 1 - beta2 ** state['step']
 
@@ -192,76 +218,23 @@ class NaturalAmsgrad_BD(Optimizer):
             g = gradients_to_vector(params)
 
             # Update moving average mean
-            # m.mul_(beta1).add_(1 - beta1, g)
-            g_hat = g # m / bias_correction1
+            m.mul_(beta1).add_(1 - beta1, g)
+            g_hat = m / bias_correction1
 
             if 'ng_prior' not in state:
                 state['ng_prior'] = torch.zeros_like(g) #g_hat) #g_hat.data.clone()
-            # if 'max_fisher_spectral_norm' not in state:
-            #     state['max_fisher_spectral_norm'] = 0.0
 
             curv_type = group['curv_type']
             if curv_type not in self.valid_curv_types:
                 raise ValueError("Invalid curv_type.")
 
-            # if curv_type == 'fisher':
-            #     weighted_fvp_fn_div_beta2 = self._make_combined_fvp_fun(closure,
-            #                                                             params,
-            #                                                             params_old,
-            #                                                             group,
-            #                                                             state,
-            #                                                             params_i,
-            #                                                             params_j,
-            #                                                             bias_correction2=bias_correction2)
-            # elif curv_type == 'gauss_newton':
-            #     weighted_fvp_fn_div_beta2 = self._make_combined_gnvp_fun(closure,
-            #                                                             params,
-            #                                                             params_old,
-            #                                                             group,
-            #                                                             state,
-            #                                                             params_i,
-            #                                                             params_j,
-            #                                                             bias_correction2=bias_correction2)
-
-            # fisher_norm = lanczos_iteration(weighted_fvp_fn_div_beta2, num_params, k=1)[0]
-            # is_max_norm = fisher_norm > state['max_fisher_spectral_norm'] or state['step'] == 1
-            # if is_max_norm:
-            #     state['max_fisher_spectral_norm'] = fisher_norm
-
-            #     if group['assume_locally_linear']:
-            #         # Update theta_old beta2 portion towards theta
-            #         theta_old = beta2 * theta_old + (1-beta2) * theta
-            #     else:
-            #         # Do linesearch first to update theta_old. Then can do CG with only one HVP at each itr.
-            #         ng = state['ng_prior'].clone() if state['step'] > 1 else g_hat.data.clone()
-            #         if curv_type == 'fisher':
-            #             weighted_fvp_fn = self._make_combined_fvp_fun(closure, params, params_old, group,
-            #                                                             state,
-            #                                                             params_i,
-            #                                                             params_j)
-            #             f = make_fvp_obj_fun_idx(closure, weighted_fvp_fn, ng, params_i, params_j)
-            #         elif curv_type == 'gauss_newton':
-            #             weighted_fvp_fn = self._make_combined_gnvp_fun(closure, params, params_old, group,
-            #                                                             state,
-            #                                                             params_i,
-            #                                                             params_j)
-            #             f = make_gnvp_obj_fun(closure, weighted_fvp_fn, ng)
-            #         xmin, fmin, alpha = randomized_linesearch_idx(f,
-            #                                             params_old_vec,
-            #                                             params_vec)
-            #         print ("LS fmin, alpha: ", fmin, alpha)
-            #         theta_old = Variable(xmin.float())
-            #     vector_to_parameters(theta_old, state['lagged'])
-            # params_old = state['lagged']
-
             # Now that theta_old has been updated, do CG with only theta old
-            # If not max norm, then this will remain the old params.
             if curv_type == 'fisher':
                 fvp_fn_div_beta2 = make_fvp_fun_idx(closure,
-                                                params,
+                                                params_old,
                                                 params_i,
                                                 params_j,
-                                                bias_correction2=0.0) #bias_correction2)
+                                                bias_correction2=bias_correction2)
             elif curv_type == 'gauss_newton':
                 fvp_fn_div_beta2 = make_gnvp_fun(closure,
                                                 params_old,
@@ -306,6 +279,7 @@ class NaturalAmsgrad_BD(Optimizer):
                 state['diag_shrunk'] = diag_shrunk
             else:
                 ng = cg_result
+            # print ("NG: ", ng)
 
             state['ng_prior'] = ng.data.clone()
 
