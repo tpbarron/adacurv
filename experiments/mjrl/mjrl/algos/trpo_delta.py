@@ -121,8 +121,8 @@ class TRPO(NPG):
                 break
             else:
                 alpha = 0.9*alpha # backtrack
-                print("Step size too high. Backtracking. | kl = %f | surr diff = %f" % \
-                      (kl_dist, surr_after-surr_before) )
+                # print("Step size too high. Backtracking. | kl = %f | surr diff = %f" % \
+                      # (kl_dist, surr_after-surr_before) )
             if k == 99:
                 alpha = 0.0
 
