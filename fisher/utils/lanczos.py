@@ -82,7 +82,6 @@ def estimate_shrinkage_buggy(eigvals, p, batch_size):
 
 
 def estimate_shrinkage(eigvals, p, batch_size):
-
     p = len(eigvals)
     # Tr(s) = Sum(\lambda_i)
     trS = np.sum(eigvals)
