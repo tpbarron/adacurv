@@ -28,6 +28,7 @@ batch_sizes = [125, 250, 500, 1000]
 decay = True
 epochs = 10
 verbose = False
+global_betas = [(0.1, 0.1), (0.9, 0.9)]
 
 ###
 # Ray remote function simply to launch the run
@@ -144,7 +145,7 @@ if basic_fisher:
                         [None],                                                                 # shrinkage_method
                         [0],                                                                    # lanzcos_amortization
                         [0],                                                                    # lanzcos_iters
-                        [(0.1, 0.1)],                                                           # betas
+                        global_betas,                                                           # betas
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
@@ -196,10 +197,10 @@ if fisher_shrunk:
                         [False],                                                                # cg_precondition_empirical
                         [0.0],                                                                  # cg_precondition_regu_coef
                         [0.0],                                                                  # cg_precondition_exp
-                        ['lanzcos', 'cg'],                                                      # shrinkage_method
+                        ['lanzcos'],                                                      # shrinkage_method
                         [1],                                                                    # lanzcos_amortization
                         [10],                                                                   # lanzcos_iters
-                        [(0.1, 0.1)],                                                           # betas
+                        global_betas,                                                           # betas
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
@@ -281,8 +282,8 @@ if fisher_all:
                         [True],                                                                 # cg_precondition_empirical
                         [0.001],                                                                # cg_precondition_regu_coef
                         [0.75],                                                                 # cg_precondition_exp
-                        ['cg', 'lanzcos'],                                                      # shrinkage_method
-                        [10],                                                                   # lanzcos_amortization
+                        ['lanzcos'],                                                      # shrinkage_method
+                        [1],                                                                   # lanzcos_amortization
                         [10],                                                                   # lanzcos_iters
                         global_betas,                                                           # betas
                         [False])                                                                # approx adaptive
