@@ -12,7 +12,7 @@ def make_optimizer(args, model):
     elif args.optim == 'adagrad':
         optimizer = optim.Adagrad(model.parameters(), lr=args.lr)
     else:
-        import fisher.optim as fisher_optim
+        import adagrad.torch.optim as fisher_optim
 
         common_kwargs = dict(lr=args.lr,
                              curv_type=args.curv_type,

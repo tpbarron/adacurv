@@ -13,45 +13,26 @@ import numpy as np
 #import matplotlib.pyplot as plt
 
 import torch.optim.lr_scheduler as lr_scheduler
-# from torch.optim.lr_scheduler import LambdaLR
-from adagrad.torch.optim.hvp_utils import kl_closure, kl_closure_idx, loss_closure, loss_closure_idx, mean_kl_multinomial
+from fisher.optim.hvp_utils import kl_closure, kl_closure_idx, loss_closure, loss_closure_idx, mean_kl_multinomial
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        # self.fc1 = nn.Linear(784, 10)
-        self.fc1 = nn.Linear(784, 100)
-        self.fc2 = nn.Linear(100, 10)
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=5)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=5)
+        self.fc1 = nn.Linear(288, 256)
+        self.fc2 = nn.Linear(256, 10)
 
     def forward(self, x, return_z=False):
-        # x = x.view(-1, 784)
-        # x = self.fc1(x)
-        x = x.view(-1, 784)
+        x = F.max_pool2d(F.relu(self.conv1(x)), kernel_size=3, stride=2)
+        x = F.max_pool2d(F.relu(self.conv2(x)), kernel_size=3, stride=2)
+        x = x.view(-1, 288)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         if return_z:
             return F.log_softmax(x, dim=1), x
         return F.log_softmax(x, dim=1)
 
-# class Net(nn.Module):
-#     def __init__(self):
-#         super(Net, self).__init__()
-#         self.conv1 = nn.Conv2d(1, 16, kernel_size=3)
-#         self.conv2 = nn.Conv2d(16, 32, kernel_size=3)
-#         self.fc1 = nn.Linear(4*4*32, 256)
-#         self.fc2 = nn.Linear(256, 10)
-#
-#     def forward(self, x, return_z=False):
-#         x = F.relu(self.conv1(x))
-#         x = F.max_pool2d(x, kernel_size=3, stride=2)
-#         x = F.relu(self.conv2(x))
-#         x = F.max_pool2d(x, kernel_size=3, stride=2)
-#         x = x.view(-1, 4*4*32)
-#         x = F.relu(self.fc1(x))
-#         x = self.fc2(x)
-#         if return_z:
-#             return F.log_softmax(x, dim=1), x
-#         return F.log_softmax(x, dim=1)
 
 def log_stats(accuracies, losses, times, args, model, device, test_loader, epoch, batch_idx):
     acc, loss = test(args, model, device, test_loader)
@@ -194,16 +175,17 @@ def launch_job(args):
 
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('./data', train=True, download=True,
+        datasets.FashionMNIST('./data', train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
+                           transforms.Normalize(mean=(0.5001,), std=(1.1458,))
                        ])),
         batch_size=args.batch_size, shuffle=True, **kwargs)
+
     test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('./data', train=False, transform=transforms.Compose([
+        datasets.FashionMNIST('./data', train=False, transform=transforms.Compose([
                            transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
+                           transforms.Normalize(mean=(0.5001,), std=(1.1458,))
                        ])),
         batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
@@ -219,7 +201,10 @@ def launch_job(args):
     if args.decay_lr:
         # lambda_lr = lambda epoch: 0.9 #1.0 / np.sqrt(epoch+1)
         lambda_lr = lambda epoch: 1.0 / np.sqrt(epoch+1)
-        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[lambda_lr])
+        if args.optim in ['ngd_bd', 'natural_amsgrad_bd']:
+            scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[lambda_lr, lambda_lr, lambda_lr, lambda_lr])
+        else:
+            scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[lambda_lr])
         # scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.1)
     for epoch in range(1, args.epochs + 1):
         train(args, model, device, train_loader, test_loader, optimizer, epoch, [accuracies, losses, times])
