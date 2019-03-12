@@ -31,7 +31,7 @@ global_betas = [(0.1, 0.1), (0.9, 0.9)]
 @ray.remote
 def run(args, i, n):
     print ("Starting job (" + str(i) + "/" + str(n) +") with args: ", args)
-    mnist.launch_job(args)
+    fashion_mnist.launch_job(args)
     print ("Finished job (" + str(i) + "/" + str(n) + ") with args: ", args)
 
 ###
