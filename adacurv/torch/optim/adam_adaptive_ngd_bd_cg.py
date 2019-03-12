@@ -8,13 +8,13 @@ from torch.optim.optimizer import Optimizer, required
 from torch.nn.utils import parameters_to_vector, vector_to_parameters
 from torch.autograd import Variable
 
-from fisher.optim.hvp_closures import make_fvp_fun, make_hvp_fun, make_gnvp_fun, make_fvp_fun_idx, make_gnvp_fun_idx, make_fvp_obj_fun, make_fvp_obj_fun_idx
-from fisher.optim.hvp_utils import Fvp, Hvp, GNvp
+from adacurv.torch.optim.hvp_closures import make_fvp_fun, make_hvp_fun, make_gnvp_fun, make_fvp_fun_idx, make_gnvp_fun_idx, make_fvp_obj_fun, make_fvp_obj_fun_idx
+from adacurv.torch.optim.hvp_utils import Fvp, Hvp, GNvp
 
-from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
-from fisher.utils.cg import cg_solve
-from fisher.utils.lanczos import lanczos_iteration, estimate_shrinkage
-from fisher.utils.linesearch import randomized_linesearch, randomized_linesearch_idx
+from adacurv.torch.utils.convert_gradients import gradients_to_vector, vector_to_gradients
+from adacurv.torch.utils.cg import cg_solve
+from adacurv.torch.utils.lanczos import lanczos_iteration, estimate_shrinkage
+from adacurv.torch.utils.linesearch import randomized_linesearch, randomized_linesearch_idx
 
 class NaturalAdam_BD(Optimizer):
 

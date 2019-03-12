@@ -10,12 +10,12 @@ from torch.autograd import Variable
 from torch.optim.optimizer import Optimizer, required
 from torch.nn.utils import vector_to_parameters, parameters_to_vector
 
-from fisher.optim.hvp_closures import make_fvp_fun, make_gnvp_fun, make_fvp_obj_fun, make_gnvp_obj_fun
-from fisher.optim.hvp_utils import Fvp, Hvp, GNvp
-from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
-from fisher.utils.cg import cg_solve
-from fisher.utils.lanczos import lanczos_iteration, estimate_shrinkage
-from fisher.utils.linesearch import randomized_linesearch
+from adacurv.torch.optim.hvp_closures import make_fvp_fun, make_gnvp_fun, make_fvp_obj_fun, make_gnvp_obj_fun
+from adacurv.torch.optim.hvp_utils import Fvp, Hvp, GNvp
+from adacurv.torch.utils.convert_gradients import gradients_to_vector, vector_to_gradients
+from adacurv.torch.utils.cg import cg_solve
+from adacurv.torch.utils.lanczos import lanczos_iteration, estimate_shrinkage
+from adacurv.torch.utils.linesearch import randomized_linesearch
 
 class NaturalAdagrad(Optimizer):
 
@@ -64,7 +64,7 @@ class NaturalAdagrad(Optimizer):
         if batch_size <= 0:
             raise ValueError("Batch size must be > 0")
 
-        super(NaturalAdagrad, self).__init__(params, defaults)
+        super(Naturaladacurv, self).__init__(params, defaults)
 
         if len(self.param_groups) != 1:
             raise ValueError("Adaptive NGD-CG doesn't support per-parameter options (parameter groups)")

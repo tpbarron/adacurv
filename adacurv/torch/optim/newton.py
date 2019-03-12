@@ -3,9 +3,9 @@ import torch
 from torch.optim.optimizer import Optimizer, required
 
 from torch.nn.utils import parameters_to_vector
-from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
-from fisher.utils.cg import cg_solve
-from fisher.utils.lanczos import lanczos_iteration, estimate_shrinkage
+from adacurv.torch.utils.convert_gradients import gradients_to_vector, vector_to_gradients
+from adacurv.torch.utils.cg import cg_solve
+from adacurv.torch.utils.lanczos import lanczos_iteration, estimate_shrinkage
 
 from functools import reduce
 

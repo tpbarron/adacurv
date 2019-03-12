@@ -13,44 +13,43 @@ import numpy as np
 #import matplotlib.pyplot as plt
 
 import torch.optim.lr_scheduler as lr_scheduler
-from fisher.optim.hvp_utils import kl_closure, kl_closure_idx, loss_closure, loss_closure_idx, mean_kl_multinomial
-
-# class Net(nn.Module):
-#     def __init__(self):
-#         super(Net, self).__init__()
-#         self.conv1 = nn.Conv2d(1, 32, kernel_size=5)
-#         self.conv2 = nn.Conv2d(32, 64, kernel_size=5)
-#         self.fc1 = nn.Linear(576, 1024)
-#         self.fc2 = nn.Linear(1024, 10)
-#
-#     def forward(self, x, return_z=False):
-#         x = F.max_pool2d(F.relu(self.conv1(x)), kernel_size=3, stride=2)
-#         x = F.max_pool2d(F.relu(self.conv2(x)), kernel_size=3, stride=2)
-#         x = x.view(-1, 576)
-#         x = F.relu(self.fc1(x))
-#         x = self.fc2(x)
-#         if return_z:
-#             return F.log_softmax(x, dim=1), x
-#         return F.log_softmax(x, dim=1)
-
+from adacurv.torch.optim.hvp_utils import kl_closure, kl_closure_idx, loss_closure, loss_closure_idx, mean_kl_multinomial
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=5)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=5)
-        self.fc1 = nn.Linear(288, 256)
-        self.fc2 = nn.Linear(256, 10)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=5)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=5)
+        self.fc1 = nn.Linear(576, 1024)
+        self.fc2 = nn.Linear(1024, 10)
 
     def forward(self, x, return_z=False):
         x = F.max_pool2d(F.relu(self.conv1(x)), kernel_size=3, stride=2)
         x = F.max_pool2d(F.relu(self.conv2(x)), kernel_size=3, stride=2)
-        x = x.view(-1, 288)
+        x = x.view(-1, 576)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         if return_z:
             return F.log_softmax(x, dim=1), x
         return F.log_softmax(x, dim=1)
+
+# class Net(nn.Module):
+#     def __init__(self):
+#         super(Net, self).__init__()
+#         self.conv1 = nn.Conv2d(1, 16, kernel_size=5)
+#         self.conv2 = nn.Conv2d(16, 32, kernel_size=5)
+#         self.fc1 = nn.Linear(288, 256)
+#         self.fc2 = nn.Linear(256, 10)
+#
+#     def forward(self, x, return_z=False):
+#         x = F.max_pool2d(F.relu(self.conv1(x)), kernel_size=3, stride=2)
+#         x = F.max_pool2d(F.relu(self.conv2(x)), kernel_size=3, stride=2)
+#         x = x.view(-1, 288)
+#         x = F.relu(self.fc1(x))
+#         x = self.fc2(x)
+#         if return_z:
+#             return F.log_softmax(x, dim=1), x
+#         return F.log_softmax(x, dim=1)
 
 
 def log_stats(accuracies, losses, times, args, model, device, test_loader, epoch, batch_idx):
@@ -92,7 +91,7 @@ def train(args, model, device, train_loader, test_loader, optimizer, epoch, data
                 if args.curv_type == 'fisher':
                     closure = kl_closure(model, data, target, mean_kl_multinomial)
                 elif args.curv_type == 'gauss_newton':
-                    closure = loss_closure(model, data, target, F.nll_loss)                    
+                    closure = loss_closure(model, data, target, F.nll_loss)
             optimizer.step(closure)
         else:
             optimizer.step()
@@ -177,7 +176,7 @@ def launch_job(args):
     elif args.batch_size == 500:
         args.log_interval = 12
     elif args.batch_size == 250:
-        args.log_interval = 24
+        args.log_interval = 12 #24
     elif args.batch_size == 125:
         args.log_interval = 48
     dir = build_log_dir(args)

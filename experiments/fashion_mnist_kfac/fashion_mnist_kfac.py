@@ -1,7 +1,42 @@
 import kfac
+import os
+import time
+import pickle
 import numpy as np
 import tensorflow as tf
 import fashion_mnist_data as mnist
+
+import arguments
+args = arguments.get_args()
+
+def build_log_dir(args):
+    dir = os.path.join(args.log_dir, "kfac")
+    dir = os.path.join(dir, "batch_size_"+str(args.batch_size))
+    dir = os.path.join(dir, "lr_"+str(args.lr))
+    dir = os.path.join(dir, str(args.seed))
+    return dir
+
+if args.batch_size == 1000:
+    args.log_interval = 6
+elif args.batch_size == 500:
+    args.log_interval = 12
+elif args.batch_size == 250:
+    args.log_interval = 12 #24
+elif args.batch_size == 125:
+    args.log_interval = 48
+dir = build_log_dir(args)
+try:
+    os.makedirs(dir)
+except:
+    pass
+with open(os.path.join(dir, 'args.pkl'), 'wb') as f:
+    pickle.dump(args, f)
+tf.random.set_random_seed(args.seed)
+
+test_losses = []
+test_accuracies = []
+times = []
+
 
 # Inverse update ops will be run every _INVERT_EVRY iterations.
 _INVERT_EVERY = 10
@@ -10,7 +45,7 @@ _INVERT_EVERY = 10
 _COV_UPDATE_EVERY = 1
 
 # Displays loss every _REPORT_EVERY iterations.
-_REPORT_EVERY = 10
+_REPORT_EVERY = args.log_interval
 
 # Use manual registration
 _USE_MANUAL_REG = False
@@ -189,7 +224,7 @@ def minimize_loss_single_machine(handle, iter_train_handle, iter_val_handle, los
   optimizer = kfac.PeriodicInvCovUpdateKfacOpt(
       invert_every=_INVERT_EVERY,
       cov_update_every=_COV_UPDATE_EVERY,
-      learning_rate=0.001,
+      learning_rate=args.lr,
       cov_ema_decay=0.95,
       damping=0.001,
       layer_collection=layer_collection,
@@ -207,9 +242,18 @@ def minimize_loss_single_machine(handle, iter_train_handle, iter_val_handle, los
   with tf.train.MonitoredTrainingSession(config=session_config) as sess:
     handle_train, handle_val = sess.run([iter_train_handle, iter_val_handle])
 
+    test_loss_, test_accuracy_= sess.run(
+      [loss, accuracy], feed_dict={handle: handle_val})
+    test_losses.append(test_loss_)
+    test_accuracies.append(test_accuracy_)
+
     while not sess.should_stop():
+      stime = time.time()
       global_step_, loss_, accuracy_, _ = sess.run(
           [g_step, loss, accuracy, train_op], feed_dict={handle: handle_train})
+      etime = time.time()
+      step_time = etime - stime
+      times.append(step_time)
 
       if global_step_ % _REPORT_EVERY == 0:
         print ("global_step: %d | loss: %f | accuracy: %s" %
@@ -217,12 +261,16 @@ def minimize_loss_single_machine(handle, iter_train_handle, iter_val_handle, los
 
         test_loss_, test_accuracy_= sess.run(
             [loss, accuracy], feed_dict={handle: handle_val})
+        test_losses.append(test_loss_)
+        test_accuracies.append(test_accuracy_)
+        # np.save(dir+"/times.npy", np.array(times))
+        np.save(dir+"/data.npy", np.array(test_accuracies))
+        np.save(dir+"/losses.npy", np.array(test_losses))
+
         print ("test_loss %f | test accuracy: %s " %
                         (test_loss_, test_accuracy_))
         tf.logging.info("global_step: %d | loss: %f | accuracy: %s",
                         global_step_, loss_, accuracy_)
-
-    # test_mnist_single_machine()
 
     return accuracy_
 
@@ -252,7 +300,7 @@ def train_mnist_single_machine(num_epochs,
   print ("Loading MNIST into memory.")
   tf.logging.info("Loading MNIST into memory.")
   iter_train_handle, output_types, output_shapes = mnist.load_mnist_as_iterator(num_epochs,
-                                                    250,
+                                                    args.batch_size,
                                                     train=True,
                                                     use_fake_data=use_fake_data,
                                                     flatten_images=False)
@@ -271,9 +319,6 @@ def train_mnist_single_machine(num_epochs,
   # Build a ConvNet.
   layer_collection = kfac.LayerCollection()
 
-  # examples_ph = tf.placeholder(shape=[None, 28, 28, 1], dtype=tf.float32)
-  # labels_ph = tf.placeholder(shape=[None,], dtype=tf.int64)
-
   loss, accuracy = build_model(
       examples, labels, num_labels=10, layer_collection=layer_collection,
       register_layers_manually=_USE_MANUAL_REG)
@@ -291,4 +336,4 @@ def train_mnist_single_machine(num_epochs,
 
 
 if __name__ == "__main__":
-    train_mnist_single_machine(10)
+    train_mnist_single_machine(args.epochs)

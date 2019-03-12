@@ -14,7 +14,7 @@ fisher_all_no_shrunk = True
 # Common params
 ###
 
-global_tag = 'fashionmnist_cnn'
+global_tag = 'fashion_mnist_cnn_large'
 seeds = list(range(1))
 global_lrs = [0.001, 0.0005]
 batch_sizes = [250] #, 500, 1000]
@@ -96,7 +96,7 @@ if baselines:
     lrs = [0.01, 0.005, 0.001]
     variants1 = product([tag],
                         seeds,
-                        ['sgd', 'adam', 'amsgrad', 'adagrad'],      # optim
+                        ['adam'],      # optim
                         [''],                                       # curv_type
                         lrs,                                        # lr
                         batch_sizes,                                # batch size
@@ -151,7 +151,7 @@ if basic_fisher:
 ###
 
 if fisher_all_no_shrunk:
-    tag = global_tag if global_tag is not None else 'fisher_gn_all_no_shrunk'
+    tag = global_tag if global_tag is not None else 'fisher_all_no_shrunk'
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam'],          # optim
