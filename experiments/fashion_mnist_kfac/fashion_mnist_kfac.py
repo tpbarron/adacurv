@@ -304,7 +304,7 @@ def train_mnist_single_machine(num_epochs,
                                                     train=True,
                                                     use_fake_data=use_fake_data,
                                                     flatten_images=False)
-  iter_val_handle, _, _ = mnist.load_mnist_as_iterator(num_epochs,
+  iter_val_handle, _, _ = mnist.load_mnist_as_iterator(10000*num_epochs, # This just ensures this doesn't cause early termination
                                                     10000,
                                                     train=False,
                                                     use_fake_data=use_fake_data,
