@@ -45,7 +45,7 @@ _INVERT_EVERY = 10
 _COV_UPDATE_EVERY = 1
 
 # Displays loss every _REPORT_EVERY iterations.
-_REPORT_EVERY = args.log_interval
+_REPORT_EVERY = 1 #args.log_interval
 
 # Use manual registration
 _USE_MANUAL_REG = False
@@ -247,6 +247,9 @@ def minimize_loss_single_machine(handle, iter_train_handle, iter_val_handle, los
     test_losses.append(test_loss_)
     test_accuracies.append(test_accuracy_)
 
+    import time
+    t1 = time.time()
+
     while not sess.should_stop():
       stime = time.time()
       global_step_, loss_, accuracy_, _ = sess.run(
@@ -259,19 +262,21 @@ def minimize_loss_single_machine(handle, iter_train_handle, iter_val_handle, los
         print ("global_step: %d | loss: %f | accuracy: %s" %
                 (global_step_, loss_, accuracy_))
 
-        test_loss_, test_accuracy_= sess.run(
-            [loss, accuracy], feed_dict={handle: handle_val})
-        test_losses.append(test_loss_)
-        test_accuracies.append(test_accuracy_)
-        # np.save(dir+"/times.npy", np.array(times))
-        np.save(dir+"/data.npy", np.array(test_accuracies))
-        np.save(dir+"/losses.npy", np.array(test_losses))
+        # test_loss_, test_accuracy_= sess.run(
+        #     [loss, accuracy], feed_dict={handle: handle_val})
+        # test_losses.append(test_loss_)
+        # test_accuracies.append(test_accuracy_)
+        # # np.save(dir+"/times.npy", np.array(times))
+        # np.save(dir+"/data.npy", np.array(test_accuracies))
+        # np.save(dir+"/losses.npy", np.array(test_losses))
+        #
+        # print ("test_loss %f | test accuracy: %s " %
+        #                 (test_loss_, test_accuracy_))
+        # tf.logging.info("global_step: %d | loss: %f | accuracy: %s",
+        #                 global_step_, loss_, accuracy_)
 
-        print ("test_loss %f | test accuracy: %s " %
-                        (test_loss_, test_accuracy_))
-        tf.logging.info("global_step: %d | loss: %f | accuracy: %s",
-                        global_step_, loss_, accuracy_)
-
+        t2 = time.time()
+        print ("KFAC time: ", t2-t1)
     return accuracy_
 
 
