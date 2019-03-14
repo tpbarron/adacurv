@@ -16,10 +16,15 @@ bs = 250
 x = tf.placeholder(shape=(bs, 28, 28), dtype='float32', name='input')
 y = tf.placeholder(shape=(bs,), dtype='int64', name='output')
 
-h = tf.keras.layers.Flatten()(x)
-# z = tf.keras.layers.Dense(10, activation=None, use_bias=False)(h)
-h = tf.keras.layers.Dense(100, activation=tf.nn.sigmoid, use_bias=False)(h)
+h = tf.keras.layers.Reshape((28, 28, 1), input_shape=(bs, 28, 28))(x)
+h = tf.keras.layers.Conv2D(filters=32, kernel_size=5, activation=tf.nn.relu, use_bias=False)(h)
+h = tf.keras.layers.MaxPool2D(pool_size=3, strides=2)(h)
+h = tf.keras.layers.Conv2D(filters=64, kernel_size=5, activation=tf.nn.relu, use_bias=False)(h)
+h = tf.keras.layers.MaxPool2D(pool_size=3, strides=2)(h)
+h = tf.keras.layers.Flatten()(h)
+h = tf.keras.layers.Dense(1024, activation=tf.nn.relu, use_bias=False)(h)
 z = tf.keras.layers.Dense(10, activation=None, use_bias=False)(h)
+
 pred = tf.nn.log_softmax(z)
 loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=z))
 accuracy = tf.reduce_mean(tf.cast(tf.equal(y, tf.argmax(z, axis=1)), dtype=tf.float32))
