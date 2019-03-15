@@ -10,21 +10,19 @@ from torch.autograd import Variable
 from torch.optim.optimizer import Optimizer, required
 from torch.nn.utils import vector_to_parameters, parameters_to_vector
 
-from fisher.optim.hvp_closures import make_fvp_fun, make_gnvp_fun, make_fvp_obj_fun, make_gnvp_obj_fun
-from fisher.optim.hvp_utils import Fvp, Hvp, GNvp
-from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
-from fisher.utils.cg import cg_solve
-from fisher.utils.lanczos import lanczos_iteration, estimate_shrinkage
-from fisher.utils.linesearch import randomized_linesearch
+from adacurv.torch.optim.hvp_closures import make_fvp_fun, make_gnvp_fun, make_fvp_obj_fun, make_gnvp_obj_fun
+from adacurv.torch.optim.hvp_utils import Fvp, Hvp, GNvp
+from adacurv.torch.utils.convert_gradients import gradients_to_vector, vector_to_gradients
+from adacurv.torch.utils.cg import cg_solve
+from adacurv.torch.utils.lanczos import lanczos_iteration, estimate_shrinkage
+from adacurv.torch.utils.linesearch import randomized_linesearch
 
-
-class NaturalAdam(Optimizer):
+class NaturalAdagrad(Optimizer):
 
     def __init__(self,
                  params,
                  lr=required,
                  curv_type=required,
-                 betas=(0.9, 0.99),
                  cg_iters=10,
                  cg_residual_tol=1e-10,
                  cg_prev_init_coef=0.5,
@@ -46,7 +44,6 @@ class NaturalAdam(Optimizer):
 
         defaults = dict(lr=lr,
                         curv_type=curv_type,
-                        betas=betas,
                         cg_iters=cg_iters,
                         cg_residual_tol=cg_residual_tol,
                         cg_prev_init_coef=cg_prev_init_coef,
@@ -67,7 +64,7 @@ class NaturalAdam(Optimizer):
         if batch_size <= 0:
             raise ValueError("Batch size must be > 0")
 
-        super(NaturalAdam, self).__init__(params, defaults)
+        super(Naturaladacurv, self).__init__(params, defaults)
 
         if len(self.param_groups) != 1:
             raise ValueError("Adaptive NGD-CG doesn't support per-parameter options (parameter groups)")
@@ -87,7 +84,6 @@ class NaturalAdam(Optimizer):
         return self._numel_cache
 
     def _make_combined_gnvp_fun(self, closure, theta, theta_old, bias_correction2=1.0):
-        beta1, beta2 = self._param_group['betas']
         step = self.state['step']
         c1, z1, tmp_params1 = closure(theta_old)
         c2, z2, tmp_params2 = closure(theta)
@@ -95,24 +91,25 @@ class NaturalAdam(Optimizer):
             hessp_beta1 = GNvp(c1, z1, tmp_params1, v)
             hessp_beta2 = GNvp(c2, z2, tmp_params2, v)
             if step >= 1:
-                weighted_hessp = beta2 * hessp_beta1 + (1 - beta2) * hessp_beta2
+                weighted_hessp = ((step - 1) * hessp_beta1 + hessp_beta2) / step
             else:
-                weighted_hessp = (1 - beta2) * hessp_beta2
+                weighted_hessp = hessp_beta2
             return weighted_hessp.data / bias_correction2
         return f
 
     def _make_combined_fvp_fun(self, closure, theta, theta_old, bias_correction2=1.0):
-        beta1, beta2 = self._param_group['betas']
         step = self.state['step']
         c1, tmp_params1 = closure(theta_old)
         c2, tmp_params2 = closure(theta)
+
         def f(v):
+            # TODO: execute these two HVP calls in parallel
             hessp_beta1 = Fvp(c1, tmp_params1, v)
             hessp_beta2 = Fvp(c2, tmp_params2, v)
             if step >= 1:
-                weighted_hessp = beta2 * hessp_beta1 + (1 - beta2) * hessp_beta2
+                weighted_hessp = ((step - 1) * hessp_beta1 + hessp_beta2) / step
             else:
-                weighted_hessp = (1 - beta2) * hessp_beta2
+                weighted_hessp = hessp_beta2
             return weighted_hessp.data / bias_correction2
         return f
 
@@ -128,8 +125,6 @@ class NaturalAdam(Optimizer):
         # State initialization
         if len(state) == 0:
             state['step'] = 0
-            # Exponential moving average of gradient values
-            state['m'] = torch.zeros_like(param_vec.data)
             # Maintain adaptive preconditioner if needed
             if self._param_group['cg_precondition_empirical']:
                 state['M'] = torch.zeros_like(param_vec.data)
@@ -137,38 +132,29 @@ class NaturalAdam(Optimizer):
             state['rho'] = 0.0
             state['diag_shrunk'] = 1.0
 
-        m = state['m']
-        beta1, beta2 = self._param_group['betas']
         state['step'] += 1
-
-        bias_correction1 = 1 - beta1 ** state['step']
-        bias_correction2 = 1 - beta2 ** state['step']
 
         # Get flat grad
         g = gradients_to_vector(self._params)
-
-        # Update moving average mean
-        m.mul_(beta1).add_(1 - beta1, g)
-        g_hat = m / bias_correction1
 
         theta = parameters_to_vector(self._params)
         theta_old = parameters_to_vector(self._params_old)
 
         if 'ng_prior' not in state:
-            state['ng_prior'] = torch.zeros_like(g_hat)
+            state['ng_prior'] = torch.zeros_like(g) #g.data.clone()
 
         curv_type = self._param_group['curv_type']
         if curv_type not in self.valid_curv_types:
             raise ValueError("Invalid curv_type.")
 
-        if self._param_group['assume_locally_linear']:
-            # Update theta_old beta2 portion towards theta
-            theta_old = beta2 * theta_old + (1-beta2) * theta
+        if self._param_group['assume_locally_linear'] or state['step'] == 1:
+            # Update cumulative average
+            theta_old = ((state['step'] - 1) * theta_old + theta) / state['step']
         else:
             # Do linesearch first to update theta_old. Then can do CG with only one HVP at each itr.
-            ng = self.state['ng_prior'].clone() if state['step'] > 1 else g_hat.data.clone()
+            ng = self.state['ng_prior'].clone() if state['step'] > 1 else g.data.clone()
             if curv_type == 'fisher':
-                weighted_fvp_fn = self._make_combined_fvp_fun(closure, self._params, self._params_old) #theta, theta_old)
+                weighted_fvp_fn = self._make_combined_fvp_fun(closure, self._params, self._params_old)
                 f = make_fvp_obj_fun(closure, weighted_fvp_fn, ng)
             elif curv_type == 'gauss_newton':
                 weighted_fvp_fn = self._make_combined_gnvp_fun(closure, self._params, self._params_old)
@@ -179,23 +165,16 @@ class NaturalAdam(Optimizer):
 
         # Now that theta_old has been updated, do CG with only theta old
         if curv_type == 'fisher':
-            fvp_fn_div_beta2 = make_fvp_fun(closure,
-                                            self._params_old,
-                                            bias_correction2=bias_correction2)
+            fvp_fn_average = make_fvp_fun(closure, self._params_old)
         elif curv_type == 'gauss_newton':
-            fvp_fn_div_beta2 = make_gnvp_fun(closure,
-                                            self._params_old,
-                                            bias_correction2=bias_correction2)
+            fvp_fn_average = make_gnvp_fun(closure, self._params_old)
 
         shrinkage_method = self._param_group['shrinkage_method']
         lanczos_amortization = self._param_group['lanczos_amortization']
         if shrinkage_method == 'lanczos' and (state['step']-1) % lanczos_amortization == 0:
             # print ("Computing Lanczos shrinkage at step ", state['step'])
-            w = lanczos_iteration(fvp_fn_div_beta2, self._numel(), k=self._param_group['lanczos_iters'])
+            w = lanczos_iteration(fvp_fn_average, self._numel(), k=self._param_group['lanczos_iters'])
             rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
-            # print ("Lanc eigs: ", w)
-            # print ("Lanc shrink (rho, diag): ", rho, diag_shrunk)
-
             state['rho'] = rho
             state['diag_shrunk'] = diag_shrunk
 
@@ -204,12 +183,12 @@ class NaturalAdam(Optimizer):
             # Empirical Fisher is g * g
             V = state['M']
             Mt = (g * g + self._param_group['cg_precondition_regu_coef'] * torch.ones_like(g)) ** self._param_group['cg_precondition_exp']
-            V.mul_(beta2).add_(1 - beta2, Mt)
-            M = V / bias_correction2
+            V = ((state['step'] - 1) * V + Mt) / state['step']
+            M = V
 
         extract_tridiag = self._param_group['shrinkage_method'] == 'cg'
-        cg_result = cg_solve(fvp_fn_div_beta2,
-                      g_hat.data.clone(),
+        cg_result = cg_solve(fvp_fn_average,
+                      g.data.clone(),
                       x_0=self._param_group['cg_prev_init_coef'] * state['ng_prior'],
                       M=M,
                       cg_iters=self._param_group['cg_iters'],
@@ -223,9 +202,7 @@ class NaturalAdam(Optimizer):
             # print ("Computing CG shrinkage at step ", state['step'])
             ng, (diag_elems, off_diag_elems) = cg_result
             w = eigvalsh_tridiagonal(diag_elems, off_diag_elems)
-            # print ("CG eigs: ", w)
             rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
-            # print ("CG shrink (rho, diag): ", rho, diag_shrunk)
             state['rho'] = rho
             state['diag_shrunk'] = diag_shrunk
         else:
@@ -235,7 +212,7 @@ class NaturalAdam(Optimizer):
 
         # Normalize NG
         lr = self._param_group['lr']
-        alpha = torch.sqrt(torch.abs(lr / (torch.dot(g_hat, ng) + 1e-20)))
+        alpha = torch.sqrt(torch.abs(lr / (torch.dot(g, ng) + 1e-20)))
 
         # Unflatten grad
         vector_to_gradients(ng, self._params)

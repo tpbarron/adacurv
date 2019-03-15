@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
-from fisher.optim.hvp_utils import Fvp, Hvp, GNvp
+from adacurv.torch.optim.hvp_utils import Fvp, Hvp, GNvp
 
 ###
 # Build mat-vec closure helpers

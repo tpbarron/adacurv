@@ -4,7 +4,7 @@ import torch
 from torch.autograd import Variable
 import torch.autograd as autograd
 from torch.nn.utils import vector_to_parameters, parameters_to_vector
-from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
+from adacurv.torch.utils.convert_gradients import gradients_to_vector, vector_to_gradients
 
 ###
 # KL functions for use with the natural gradient variants.

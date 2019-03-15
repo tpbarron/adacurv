@@ -9,7 +9,7 @@ ray.init(num_cpus=20)
 baselines = False
 basic_fisher = True
 basic_gauss_newton = False
-fisher_shrunk = False
+fisher_shrunk = True
 fisher_precondition = False
 fisher_momentum = False
 fisher_all_no_shrunk = True
@@ -28,6 +28,7 @@ batch_sizes = [125, 250, 500, 1000]
 decay = True
 epochs = 10
 verbose = False
+global_betas = [(0.1, 0.1), (0.9, 0.9)]
 
 ###
 # Ray remote function simply to launch the run
@@ -144,10 +145,11 @@ if basic_fisher:
                         [None],                                                                 # shrinkage_method
                         [0],                                                                    # lanzcos_amortization
                         [0],                                                                    # lanzcos_iters
-                        [(0.1, 0.1)],                                                           # betas
+                        global_betas,                                                           # betas
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
+    print ("basic_fisher:", variants1)
     print (len(variants1))
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
@@ -195,13 +197,14 @@ if fisher_shrunk:
                         [False],                                                                # cg_precondition_empirical
                         [0.0],                                                                  # cg_precondition_regu_coef
                         [0.0],                                                                  # cg_precondition_exp
-                        ['lanzcos', 'cg'],                                                      # shrinkage_method
+                        ['lanzcos'],                                                      # shrinkage_method
                         [1],                                                                    # lanzcos_amortization
                         [10],                                                                   # lanzcos_iters
-                        [(0.1, 0.1)],                                                           # betas
+                        global_betas,                                                           # betas
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
+    print ("fisher_shrunk:", variants1)
     print (len(variants1))
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
@@ -279,13 +282,14 @@ if fisher_all:
                         [True],                                                                 # cg_precondition_empirical
                         [0.001],                                                                # cg_precondition_regu_coef
                         [0.75],                                                                 # cg_precondition_exp
-                        ['cg', 'lanzcos'],                                                      # shrinkage_method
-                        [10],                                                                   # lanzcos_amortization
+                        ['lanzcos'],                                                      # shrinkage_method
+                        [1],                                                                   # lanzcos_amortization
                         [10],                                                                   # lanzcos_iters
                         global_betas,                                                           # betas
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
+    print ("fisher_all:", variants1)
     print (len(variants1))
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
@@ -294,7 +298,7 @@ if fisher_all_no_shrunk:
     variants1 = product([tag],
                         seeds,
                         ['ngd', 'natural_adam', 'natural_adagrad', 'natural_amsgrad'],          # optim
-                        ['fisher', 'gauss_newton'],                                                             # curv_type
+                        ['fisher'],                                                             # curv_type
                         global_lrs,                                                             # lr
                         batch_sizes,                                                            # batch size
                         [10],                                                                   # cg_iters
@@ -309,6 +313,7 @@ if fisher_all_no_shrunk:
                         [False])                                                                # approx adaptive
 
     variants1 = list(variants1)
+    print ("fisher_all_no_shrunk:", variants1)
     print (len(variants1))
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
@@ -336,6 +341,10 @@ if gauss_newton_all:
     print (len(variants1))
     all_variants = copy.deepcopy(list(chain(all_variants, variants1)))
 
+
+all_variants_set = set(all_variants)
+assert (len(all_variants_set) == len(all_variants))
 print ("Total:", len(all_variants))
 input("Continue?")
+
 run_variants(all_variants)

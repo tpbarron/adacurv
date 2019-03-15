@@ -7,10 +7,10 @@ import torch
 from torch.optim.optimizer import Optimizer, required
 from torch.nn.utils import parameters_to_vector
 
-from fisher.optim.hvp_closures import make_fvp_fun, make_hvp_fun, make_gnvp_fun, make_fvp_fun_idx, make_gnvp_fun_idx
-from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
-from fisher.utils.cg import cg_solve
-from fisher.utils.lanczos import lanczos_iteration, estimate_shrinkage
+from adacurv.torch.optim.hvp_closures import make_fvp_fun, make_hvp_fun, make_gnvp_fun, make_fvp_fun_idx, make_gnvp_fun_idx
+from adacurv.torch.utils.convert_gradients import gradients_to_vector, vector_to_gradients
+from adacurv.torch.utils.cg import cg_solve
+from adacurv.torch.utils.lanczos import lanczos_iteration, estimate_shrinkage
 
 class NGD_BD(Optimizer):
     r"""Implements "Fisher-free" natural gradient descent.
@@ -281,7 +281,7 @@ class NGD_BD(Optimizer):
 
 
             state['step'] += 1
-            
+
             g = gradients_to_vector(params)
 
             if 'ng_prior' not in state:
