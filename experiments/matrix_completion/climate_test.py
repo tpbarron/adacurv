@@ -26,7 +26,7 @@ class Factorization(nn.Module):
             P = self.A @ self.B.t()
         return P
 
-def mat_completion_loss(W, M, P, A, B, ids, lmda1=0.001, lmda2=0.001):
+def mat_completion_loss(W, M, P, A, B, ids, lmda1=0.01, lmda2=0.01):
     # e = torch.norm(W[ids] * (M[ids] - P[ids]), 'fro') #** 2.0
     # print ("W: ", W.shape, W[ids].shape, P.shape)
     e = torch.norm(W[ids] * (M[ids] - P), 'fro') ** 2.0
@@ -99,13 +99,13 @@ if __name__ == "__main__":
     # B is (n x r)
     # So A @ B.T is (m x n)
 
-    rcp = 'rcp45'
+    rcp = 'rcp85'
     M = np.load("data/climate_data/matrices/M_1900_2101_"+rcp+".npy")
     W = np.load("data/climate_data/matrices/W_1900_2101_"+rcp+".npy")
     # W[0:18,:] *= 0.1
     # W[18:,:] *= 10.
 
-    bs = 2500
+    bs = 5000
     n_samples = np.count_nonzero(W)
     print ("num sampes: ", n_samples)
     Wind = np.nonzero(W)
@@ -143,7 +143,7 @@ if __name__ == "__main__":
                                          curv_type='gauss_newton',
                                          shrinkage_method=None,
                                          batch_size=bs,
-                                         betas=(0.1, 0.1),
+                                         betas=(0.9, 0.9),
                                          assume_locally_linear=True)
         # optB = fisher_optim.NaturalAdam([fac.B],
         #                                  lr=0.001,
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     from torch.optim.lr_scheduler import ReduceLROnPlateau
     scheduler = ReduceLROnPlateau(optA, 'min')
 
-    for i in range(250):
+    for i in range(500):
         Wind = randomize_windices(Wind)
         for j in range(n_batches):
 
@@ -209,5 +209,5 @@ if __name__ == "__main__":
         if error < best_error:
             P2 = fac()
             gn_str = 'gn' if gn else 'adam'
-            np.save('models/P_'+rcp+'_rank'+str(r)+'_'+gn_str+'.npy', P2.data.numpy())
+            np.save('models/testlarge_P_'+rcp+'_rank'+str(r)+'_'+gn_str+'.npy', P2.data.numpy())
             best_error = error
