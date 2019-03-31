@@ -4,7 +4,7 @@
 
 This repository contains two main components.
 
-  * `fisher`: this module contains [PyTorch](https://pytorch.org) code for the adaptive NGD methods we study along with utilities for Fisher-vector products, CG optimization, Lanczos iteration, and line search.
+  * `adacurv/torch`: this module contains [PyTorch](https://pytorch.org) code for the adaptive NGD methods we study along with utilities for Fisher-vector products, CG optimization, Lanczos iteration, and line search.
   * `experiments`: this subdirectory contains the code used to run the experiments in the paper.
     * `mnist` and `svhn`: code used for the supervised training experiments.
     * `mjrl`: code adapted from an existing MuJoCo RL library, [MJRL](https://github.com/aravindr93/mjrl), to accommodate [PyBullet](https://pybullet.org/wordpress/) and our new optimizers.

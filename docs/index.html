@@ -33,12 +33,24 @@
     export PYTHONPATH=$PYTHONPATH:/path/to/adacurv/
   </dt-code>
 
+  <p>If you would like to run the RL experiments additional paths must be set:</p>
+  <dt-code block language="bash">
+    export PYTHONPATH=$PYTHONPATH:/path/to/adacurv/experiments/mjrl/    # for the PyBullet RL experiments
+    export PYTHONPATH=$PYTHONPATH:/path/to/adacurv/experiments/bbbot/   # for the Basketball robot simulation.
+  </dt-code>
+
   <p>Install the dependencies:</p>
   <dt-code block language="bash">
     pip install -r requirements.txt
   </dt-code>
 
-  <p>At this point one may run the samples in the experiments folder.</p>
+  <p>At this point one may run the samples in the experiments folder. To get started right away we
+    have included a <dt-code block language="python">quick_start.py</dt-code> file in the
+    <dt-code block language="html">mnist</dt-code> and <dt-code block language="html">mjrl</dt-code>
+    experiment directories that run a single experiment.
+    Once that has finished the data can be plotted with the corresponding
+    <dt-code block language="python">plot_quick_start.py</dt-code> in the same directory script.
+  <p>
 
   <hr>
   <h2>Project Structure</h2>
@@ -62,11 +74,14 @@
 
   <p>The AdaCurv optimizers depend on a the ability to compute the derivative of the loss repeatedly
      (for each matrix-vector product) and thus require a loss closure to be passed. The framework
-     provides several common, preimplemented loss closures in `adacurv/torch/optim/hvp_closures.py`.
-     For example, the MNIST experiment creates a `kl_closure` at each optimization step that depends
-     on the model, input and output data, and a loss function (in this case `mean_kl_multinomial`
+     provides several common, preimplemented loss closures in
+     <dt-code block language="python">adacurv/torch/optim/hvp_closures.py</dt-code>.
+     For example, the MNIST experiment creates a
+     <dt-code block language="python">kl_closure</dt-code> at each optimization step that depends
+     on the model, input and output data, and a loss function (in this case
+     <dt-code block language="python">mean_kl_multinomial</dt-code>
      because the Fisher is the Hessian of the KL divergence). This closure is then passed to the
-     `optimizer.step` function.
+     <dt-code block language="python">optimizer.step</dt-code> function.
    </p>
 
   <dt-code block language="python">
