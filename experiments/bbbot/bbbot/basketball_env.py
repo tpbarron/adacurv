@@ -13,7 +13,12 @@ from bbbot import basketball_robot
 
 class BasketballEnv(gym.Env):
 
-    def __init__(self, render=False, delay=False, horizon=500, random_hoop=False):
+    def __init__(self,
+                 render=False,
+                 delay=False,
+                 horizon=500,
+                 random_hoop=False,
+                 increment_hoop=False):
         if render:
             mode = pb.GUI
         else:
@@ -22,6 +27,7 @@ class BasketballEnv(gym.Env):
         self.dt = 1/240.
         self.horizon = horizon
         self.random_hoop = random_hoop
+        self.increment_hoop = increment_hoop
 
         self.client = pb.connect(mode)
         pb.setAdditionalSearchPath(pybullet_data.getDataPath(), physicsClientId=self.client)
@@ -36,18 +42,21 @@ class BasketballEnv(gym.Env):
 
         self.hoopStartPosOrig = [1.5, 0.0, 1.0]
         self.hoopStartPos = [1.5, 0.0, 1.0]
-        self.hoopTheta = 0.0
+        self.hoopTheta = -np.pi / 12.0
+        self.hoopIncrement = np.pi / 6.0 / 100.0
         self.hoopStartOrientation = pb.getQuaternionFromEuler([0,0,0])
+
         self.cylStartPos = [0.2, 0.0, 0.4+0.2]
         self.cylStartOrientation = pb.getQuaternionFromEuler([0,0,0])
         self.ballStartPos = [0.2, 0.0, 0.4+2*0.2+0.13]
+
         # self.ballStartPos = [2.0, 0.0, 10.0]
         self.ballStartOrientation = pb.getQuaternionFromEuler([0,0,0])
         self.initial_ball_z = None
 
         # concat one arm pos, and vel + hoop
         # 12 + 12 + 6 + 3
-        if random_hoop:
+        if random_hoop or increment_hoop:
             obs_dim = 31
         else:
             obs_dim = 30
@@ -58,7 +67,7 @@ class BasketballEnv(gym.Env):
         robot_state = self.robot.state()
         ball_state = self.get_ball_state()
         # hoop_pos = np.array(self.hoopStartPos)
-        if self.random_hoop:
+        if self.random_hoop or self.increment_hoop:
             state = np.concatenate([robot_state, ball_state, np.array([self.hoopTheta])])
         else:
             state = np.concatenate([robot_state, ball_state])
@@ -83,12 +92,15 @@ class BasketballEnv(gym.Env):
             self.hoop = pb.loadSDF(os.path.join(os.path.dirname(__file__), 'assets/bbbot_gazebo/models/hoop/model.sdf'), physicsClientId=self.client)[0]
         if self.random_hoop:
             # Random 30 degree around x axis
-            theta = (np.random.random() * 2.0 - 1.0) * np.pi / 12.0
-            hyp, yi, zi = self.hoopStartPosOrig # [1.5, 0.0, 1.0]
-            x = np.cos(theta) * hyp
-            y = np.sin(theta) * hyp
-            self.hoopStartPos = [x, y, zi]
-            self.hoopTheta = theta
+            self.hoopTheta = (np.random.random() * 2.0 - 1.0) * np.pi / 12.0
+        elif self.increment_hoop:
+            self.hoopTheta += self.hoopIncrement
+        theta = self.hoopTheta
+        hyp, yi, zi = self.hoopStartPosOrig # [1.5, 0.0, 1.0]
+        x = np.cos(theta) * hyp
+        y = np.sin(theta) * hyp
+        self.hoopStartPos = [x, y, zi]
+
         pb.resetBasePositionAndOrientation(self.hoop, self.hoopStartPos, self.hoopStartOrientation, physicsClientId=self.client)
         if self.cyl is None:
             self.cyl = pb.loadSDF(os.path.join(os.path.dirname(__file__), 'assets/bbbot_gazebo/models/cylinder/model.sdf'), physicsClientId=self.client)[0]
@@ -347,7 +359,7 @@ def make_basketball_env_random_hoop():
     return env
 
 def make_basketball_env_random_hoop_rendered():
-    env = BasketballEnv(render=True, delay=True, random_hoop=True)
+    env = BasketballEnv(render=True, delay=False, random_hoop=True): #, increment_hoop=True)
     return env
 
 BasketballEnvRendered = make_basketball_env_rendered

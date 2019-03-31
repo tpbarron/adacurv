@@ -5,9 +5,10 @@ import pybullet as pb
 
 class BasketballRobot:
 
-    def __init__(self, pb_client_id, delay=True):
+    def __init__(self, pb_client_id, delay=True, save_sequence=False):
         self.pb_client_id = pb_client_id
         self.delay = delay
+        self.save_sequence = save_sequence
         self.dt = 1/240.0
 
         self.robot_urdf = os.path.join(os.path.dirname(__file__), 'assets/bbbot_description/urdf/bbbot.urdf')
@@ -15,6 +16,10 @@ class BasketballRobot:
 
         self.joint_indices_left = [2, 3, 4, 5, 6, 7]
         self.joint_indices_right = [11, 12, 13, 14, 15, 16]
+
+        if save_sequence:
+            self.data = []
+            self.traj_indices = []
 
 
     def state(self):
@@ -27,6 +32,8 @@ class BasketballRobot:
         return state
 
     def move_to_initial_position(self):
+        if self.save_sequence:
+            self.traj_indices.append(len(self.data))
         pos_left = [2.5, 0.75, -0.4, 0, 0, 3.14]
         pos_right = [-2.5, 0.75, -0.4, 0, 0, 3.14]
         pb.setJointMotorControlArray(self.robot, self.joint_indices_left, pb.POSITION_CONTROL, targetPositions=pos_left, physicsClientId=self.pb_client_id)
@@ -97,8 +104,21 @@ class BasketballRobot:
             pb.setJointMotorControlArray(self.robot, self.joint_indices_left, mode, forces=u_left, physicsClientId=self.pb_client_id)
             pb.setJointMotorControlArray(self.robot, self.joint_indices_right, mode, forces=u_right, physicsClientId=self.pb_client_id)
 
-
         for s in range(action_repeat):
+            if self.save_sequence:
+                joint_states_left = pb.getJointStates(self.robot, self.joint_indices_left, physicsClientId=self.pb_client_id)
+                joint_pos_left = [j[0] for j in joint_states_left]
+                joint_states_right = pb.getJointStates(self.robot, self.joint_indices_right, physicsClientId=self.pb_client_id)
+                joint_pos_right = [j[0] for j in joint_states_right]
+                self.data.append(joint_pos_left + joint_pos_right)
             pb.stepSimulation(physicsClientId=self.pb_client_id)
             if self.delay:
                 time.sleep(self.dt)
+
+        if self.save_sequence:
+            data_npy = np.array(self.data)
+            print (data_npy)
+            print ("Data shape: ", data_npy.shape)
+            traj_idx = np.array(self.traj_indices)
+            np.save('data.npy', data_npy)
+            np.save('traj_idx.npy', traj_idx)
