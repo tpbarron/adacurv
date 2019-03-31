@@ -23,7 +23,7 @@ z = tf.layers.Dense(10, activation=None)(h)
 y_pred = tf.nn.softmax(z)
 f = tf.reduce_mean(-tf.reduce_sum(y_var * tf.log(y_pred), reduction_indices=[1]))
 # y = tf.placeholder(shape=(None,), dtype='int32', name='output')
-# f = tf.losses.sparse_softmax_cross_entropy(labels=y_var, logits=z)
+f = tf.losses.sparse_softmax_cross_entropy(labels=y_var, logits=z)
 
 def hessian_vec_bk(ys, xs, vs, grads=None):
     """Implements Hessian vector product using backward on backward AD.
