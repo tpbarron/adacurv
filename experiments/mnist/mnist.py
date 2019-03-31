@@ -14,7 +14,7 @@ import numpy as np
 
 import torch.optim.lr_scheduler as lr_scheduler
 # from torch.optim.lr_scheduler import LambdaLR
-from adagrad.torch.optim.hvp_utils import kl_closure, kl_closure_idx, loss_closure, loss_closure_idx, mean_kl_multinomial
+from adacurv.torch.optim.hvp_utils import kl_closure, kl_closure_idx, loss_closure, loss_closure_idx, mean_kl_multinomial
 
 class Net(nn.Module):
     def __init__(self):
