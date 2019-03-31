@@ -19,10 +19,29 @@
 <meta charset="utf-8">
 <script src="js/template.v1.js"></script>
 <!-- <script src="https://tpbarron.github.io/js/template.v1.js"></script> -->
+<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
 
 <dt-article>
   <h1>AdaCurv</h1>
   <h2>Adaptive Curvature for Stochastic Optimization</h2>
+
+  <hr>
+  <h2>What is AdaCurv?</h2>
+  <p>AdaCurv forms adaptive estimates of the <i>curvature matrix</i> similar to how algorithms like
+     Adam or Adagrad form adaptive estimates of the <i>gradient</i>. This results in more efficient
+     estimation of the curvature matrix with fewer data samples at each iteration. </p>
+
+  <p>For those familiar with Adam, here is a high-level view of an Adam-style variant of AdaCurv.</p>
+
+  <p>
+  \begin{align*}
+    g_t &= \nabla_{\theta_t} f_t \quad && \text{compute gradient of objective $f_t$}\\
+    m_t &= \beta_1 m_{t-1} + (1-\beta_1) g_t \quad && \text{compute adaptive gradient with $0 < \beta_1 < 1$} \\
+    B_t &= \nabla_{\theta_t}^2 f_t \quad && \text{compute curvature at time $t$}\\
+    C_t &= \beta_2 C_{t-1} + (1-\beta_2) B_t \quad && \text{compute adaptive curvature $0 < \beta_2 < 1$} \\
+    \theta_t &= \theta_{t-1} - \eta C^{-1} m_t \quad && \text{perform parameter update}
+  \end{align*}
+  </p>
 
   <hr>
   <h2>Getting Started</h2>
