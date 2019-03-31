@@ -1,22 +1,27 @@
 import numpy as np
 import tensorflow as tf
-# import fashion_mnist_data as mnist
+import fashion_mnist_data as mnist
 from tensorflow_forward_ad import forward_gradients
 from tensorflow_forward_ad.second_order import fisher_vec_bk, hessian_vec_bk, gauss_newton_vec
 
 from adacurv.tf.optimizers import NGDOptimizer
 
-mnist = tf.keras.datasets.mnist
+# mnist = tf.keras.datasets.mnist
 
-(x_train, y_train),(x_test, y_test) = mnist.load_data()
-x_train, x_test = x_train / 255.0, x_test / 255.0
+# (x_train, y_train),(x_test, y_test) = mnist.load_data()
+# x_train, x_test = x_train / 255.0, x_test / 255.0
 
 bs = 250
 
-x = tf.placeholder(shape=(bs, 28, 28), dtype='float32', name='input')
-y = tf.placeholder(shape=(bs,), dtype='int64', name='output')
+(examples, labels) = mnist.load_mnist_as_iterator(2,
+                                                  bs,
+                                                  use_fake_data=False,
+                                                  flatten_images=False)
 
-h = tf.keras.layers.Reshape((28, 28, 1), input_shape=(bs, 28, 28))(x)
+# x = tf.placeholder(shape=(bs, 28, 28), dtype='float32', name='input')
+# y = tf.placeholder(shape=(bs,), dtype='int64', name='output')
+
+h = tf.keras.layers.Reshape((28, 28, 1), input_shape=(bs, 28, 28))(examples)
 h = tf.keras.layers.Conv2D(filters=32, kernel_size=5, activation=tf.nn.relu, use_bias=False)(h)
 h = tf.keras.layers.MaxPool2D(pool_size=3, strides=2)(h)
 h = tf.keras.layers.Conv2D(filters=64, kernel_size=5, activation=tf.nn.relu, use_bias=False)(h)
@@ -26,8 +31,8 @@ h = tf.keras.layers.Dense(1024, activation=tf.nn.relu, use_bias=False)(h)
 z = tf.keras.layers.Dense(10, activation=None, use_bias=False)(h)
 
 pred = tf.nn.log_softmax(z)
-loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=z))
-accuracy = tf.reduce_mean(tf.cast(tf.equal(y, tf.argmax(z, axis=1)), dtype=tf.float32))
+loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=z))
+accuracy = tf.reduce_mean(tf.cast(tf.equal(labels, tf.argmax(z, axis=1)), dtype=tf.float32))
 
 vars = tf.trainable_variables()
 
@@ -174,29 +179,47 @@ with tf.control_dependencies(cg_op[1]):
 
     train_op = tf.group(var_update_ops)
 
-with tf.Session() as sess:
-    init_op = tf.global_variables_initializer()
-    sess.run(init_op)
-
-    # while True:
+with tf.train.MonitoredTrainingSession() as sess:
     import time
-    s1 = time.time()
+    t1 = time.time()
 
-    for i in range(0, x_train.shape[0], bs):
-        x_t, y_t = x_train[i:i+bs], y_train[i:i+bs]
-        # print (x_t.shape, y_t.shape)
-        if x_t.shape[0] < bs:
-            break
-        # import time
-        # s1 = time.time()
-        _, acc, los = sess.run([train_op, accuracy, loss], feed_dict={x: x_t, y: y_t})
+    while not sess.should_stop():
+        stime = time.time()
+        global_step_, loss_, accuracy_, _ = sess.run([g_step, loss, accuracy, train_op])
+        etime = time.time()
+        step_time = etime - stime
+        # times.append(step_time)
 
-        # sess.run(tf.print(cg_step))
-        # cg_out, _, acc, los = sess.run([cg_iter_op, train_op, accuracy, loss], feed_dict={x: x_t, y: y_t})
-        # s2 = time.time()
-        # print ("time: ", s2-s1)
-        print ("Loss: ", los, "; acc: ", acc)
+        t2 = time.time()
+        if global_step_ % 1 == 0:
+            print ("global_step: %d | loss: %f | accuracy: %s" %
+                  (global_step_, loss_, accuracy_))
+            print ("FANG time: ", (t2-t1), step_time)
 
-        # time.sleep(0.1)
-    s2 = time.time()
-    print ("time: ", s2-s1)
+
+# with tf.Session() as sess:
+#     init_op = tf.global_variables_initializer()
+#     sess.run(init_op)
+#
+#     # while True:
+#     import time
+#     s1 = time.time()
+#
+#     for i in range(0, x_train.shape[0], bs):
+#         x_t, y_t = x_train[i:i+bs], y_train[i:i+bs]
+#         # print (x_t.shape, y_t.shape)
+#         if x_t.shape[0] < bs:
+#             break
+#         # import time
+#         # s1 = time.time()
+#         _, acc, los = sess.run([train_op, accuracy, loss], feed_dict={x: x_t, y: y_t})
+#
+#         # sess.run(tf.print(cg_step))
+#         # cg_out, _, acc, los = sess.run([cg_iter_op, train_op, accuracy, loss], feed_dict={x: x_t, y: y_t})
+#         # s2 = time.time()
+#         # print ("time: ", s2-s1)
+#         print ("Loss: ", los, "; acc: ", acc)
+#
+#         # time.sleep(0.1)
+#     s2 = time.time()
+#     print ("time: ", s2-s1)
