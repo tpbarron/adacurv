@@ -219,7 +219,7 @@ def launch_job(args):
     if args.decay_lr:
         # lambda_lr = lambda epoch: 0.9 #1.0 / np.sqrt(epoch+1)
         lambda_lr = lambda epoch: 1.0 / np.sqrt(epoch+1)
-        if args.optim in ['ngd_bd', 'natural_amsgrad_bd']:
+        if args.optim in ['ngd_bd', 'natural_amsgrad_bd', 'natural_adam_bd']:
             scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[lambda_lr, lambda_lr, lambda_lr, lambda_lr])
         else:
             scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=[lambda_lr])

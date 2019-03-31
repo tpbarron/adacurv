@@ -34,7 +34,7 @@ def gen_subsample(epoch_ids, n=10):
         subsamp.extend(subsamp_i)
     return np.array(subsamp)
 
-def plot(tag='mlp', bs=250, subtag='batch', lr='0.0005', file='data'):
+def plot(tag='mlp', bs=250, subtag='batch', lr='0.001', file='data'):
     print ("Tag, bs: ", tag, bs)
     try:
         os.makedirs("results/"+str(tag)+"/plots/" + subtag)
@@ -47,12 +47,25 @@ def plot(tag='mlp', bs=250, subtag='batch', lr='0.0005', file='data'):
     # epoch_ids_red = np.load("results/meta/epoch_ids_batch125_reduce.npy")
     # xs_red = gen_xs(epoch_ids_red)
 
+    file = 'data'
+
+    idx = np.concatenate([np.arange(i, i+20) for i in range(0, 200, 21)])
+    idx = np.concatenate([idx, np.array([210])])
+
     adam = np.load("results/"+str(tag)+"/adam/optim_adaptive/curv_type_/cg_iters_10/cg_residual_tol_1e-10/cg_prev_init_coef_0.0/cg_precondition_empirical_false/shrunk_false/batch_size_"+str(bs)+"/lr_0.001/0/"+str(file)+".npy")
     ngd = np.load("results/"+str(tag)+"/ngd/optim_adaptive/curv_type_fisher/cg_iters_10/cg_residual_tol_1e-10/cg_prev_init_coef_0.0/cg_precondition_empirical_false/shrunk_false/batch_size_"+str(bs)+"/lr_"+str(lr)+"/0/"+str(file)+".npy")
 
-    natural_adam_approx = np.load("results/"+str(tag)+"/natural_adam/optim_adaptive/curv_type_fisher/cg_iters_10/cg_residual_tol_1e-10/cg_prev_init_coef_0.1/cg_precondition_empirical_true/cg_precondition_regu_coef_0.001/cg_precondition_exp_0.75/shrunk_false/batch_size_250/lr_0.001/betas0.9_0.9/0/"+str(file)+".npy")
+    natural_adam_approx = np.load("results_old/results.back/"+str(tag)+"/natural_adam/optim_adaptive/curv_type_fisher/cg_iters_10/cg_residual_tol_1e-10/cg_prev_init_coef_0.1/cg_precondition_empirical_true/cg_precondition_regu_coef_0.001/cg_precondition_exp_0.75/shrunk_false/batch_size_250/lr_"+str(lr)+"/betas0.9_0.9/0/"+str(file)+".npy")
+    # natural_adam_approx = np.load("results/"+str(tag)+"/natural_adam_bd/approx_adaptive/curv_type_fisher/cg_iters_10/cg_residual_tol_1e-10/cg_prev_init_coef_0.1/cg_precondition_empirical_true/cg_precondition_regu_coef_0.001/cg_precondition_exp_0.75/shrunk_false/batch_size_250/lr_"+str(lr)+"/0/"+str(file)+".npy")
 
-    kfac = np.load("results/"+str(tag)+"/kfac/batch_size_250/lr_"+str(lr)+"/1/"+str(file)+".npy")
+    kfac = np.load("results/"+str(tag)+"/kfac/batch_size_250/lr_"+str(lr)+"/0/"+str(file)+".npy") #* 100 #/ 10000.0
+
+    if file == 'data':
+        kfac *= 100
+
+    adam = adam[idx]
+    ngd = ngd[idx]
+    natural_adam_approx = natural_adam_approx[idx]
 
     plt.rc('font', family='serif')
     plt.rc('text', usetex=True)
@@ -72,18 +85,23 @@ def plot(tag='mlp', bs=250, subtag='batch', lr='0.0005', file='data'):
     fig = plt.figure(figsize=(4, 3))
 
     plt.plot(natural_adam_approx, label="FANG-Adam-", ls='dashed', color='xkcd:light green')
-    print ("Best natural_adam_approx: ", max(natural_adam_approx))
+    print ("Best natural_adam_approx: ", max(natural_adam_approx), min(natural_adam_approx))
 
     plt.plot(ngd, label="NGD", ls='solid', color='xkcd:orange')
-    print ("Best ngd: ", max(ngd))
+    print ("Best ngd: ", max(ngd), min(ngd))
 
     plt.plot(adam, label="Adam", ls='solid', color='xkcd:green')
-    print ("Best Adam: ", max(adam))
+    print ("Best Adam: ", max(adam), min(adam))
 
-    plt.plot(kfac*100.0, label='K-FAC', ls='solid', color='xkcd:sky blue')
-    print ("Best kfac: ", max(kfac))
+    plt.plot(kfac, label='K-FAC', ls='solid', color='xkcd:sky blue')
+    print ("Best kfac: ", max(kfac), min(kfac))
 
-    ylims=(50.0, 98.25)
+    plt.axhline(87.53)
+    plt.axvline(x=20)
+
+
+    ylims=(80.0, 95.25)
+    # ylims=(0.0, 1.)
     plt.ylim(ylims)
     # xlims=(0.0, 100)
     # plt.xlim(xlims)
@@ -98,4 +116,4 @@ def plot(tag='mlp', bs=250, subtag='batch', lr='0.0005', file='data'):
 
 batch_sizes = [250] #, 500, 1000]
 for b in batch_sizes:
-    plot(tag='fashion_mnist_cnn_large', bs=b, subtag='general')
+    plot(tag='fashion_mnist_cnn_large', bs=b, subtag='rerun')
