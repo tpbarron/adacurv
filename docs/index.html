@@ -51,17 +51,31 @@
         mnist/
         ...
       adacurv/
-        optim/ - optimizer implementations
-        utils/ - utilities for CG, Lanzcos, linesearch
+        torch/  - PyTorch implementation of AdaCurv
+          optim/  - optimizer implementations
+          utils/  - utilities for CG, Lanzcos, linesearch
+        tf/     - Tensorflow implementation in progress
   </dt-code>
 
   <hr>
   <h2>Using an AdaCurv Optimizer</h2>
 
-  <p>The AdaCurv optimizers depend on a the ability to compute the derivative of the loss repeatedly (for each matrix-vector product) and thus require a loss closure to be passed. The framework provides several common, preimplemented loss closures in fisher/optim/hvp_closures.py</p>
+  <p>The AdaCurv optimizers depend on a the ability to compute the derivative of the loss repeatedly
+     (for each matrix-vector product) and thus require a loss closure to be passed. The framework
+     provides several common, preimplemented loss closures in `adacurv/torch/optim/hvp_closures.py`.
+     For example, the MNIST experiment creates a `kl_closure` at each optimization step that depends
+     on the model, input and output data, and a loss function (in this case `mean_kl_multinomial`
+     because the Fisher is the Hessian of the KL divergence). This closure is then passed to the
+     `optimizer.step` function.
+   </p>
 
-  <p></p>
+  <dt-code block language="python">
+    closure = kl_closure(model, data, target, mean_kl_multinomial)
+    optimizer.step(closure)
+  </dt-code>
 
+  <p>The optimizer takes care of the rest of the optimization including the curvature-vector products
+    and adaptive parameter updates behind the scenes.</p>
 
   <hr>
   <p>Template adapted from <a href="https://distill.pub">Distill</a> with much gratitude.</p>
