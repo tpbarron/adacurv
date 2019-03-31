@@ -13,7 +13,7 @@ from torch.autograd import Variable
 
 import pickle
 
-from fisher.optim.hvp_utils import kl_closure, loss_closure
+from adacurv.torch.optim.hvp_utils import kl_closure, loss_closure
 
 class ValueFn(nn.Module):
 

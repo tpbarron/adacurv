@@ -12,7 +12,7 @@ from mjrl.algos.npg_cg import NPG
 from mjrl.algos.trpo import TRPO
 import mjrl.envs
 import pickle
-import fisher.optim as fisher_optim
+import adacurv.torch.optim as fisher_optim
 from mjrl.samplers import base_sampler
 
 decay = False
@@ -90,7 +90,7 @@ total_samples_2000000/batch_size_2000/lr_0.01/betas0.9_0.9/1/iterations/"
     e.reset()
     input("Continue?")
 
-    N = 15
+    N = 100
     T = 250
     paths = base_sampler.do_rollout(N, policy, T, e, None)
     for p in paths:

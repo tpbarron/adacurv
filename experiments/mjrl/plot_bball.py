@@ -109,7 +109,7 @@ def plot(tag='mlp',
     # plt.savefig("results/"+str(tag)+"/plots/"+ subtag +"/"+str(env)+"_bs"+str(bs)+"_rewards_"+compile+".pdf")
 
 # f, axes = plt.subplots(1, 3)
-subtag = 'rerun'
+subtag = 'rerun2'
 tag='pybullet_sample_mode_bball_random_hoop'
 plot(tag='pybullet_sample_mode_bball_random_hoop', env='BasketBallEnvRandomHoop-v0', bs=2000, betas='betas0.9_0.9', subtag=subtag, compile='median') #, fig_ax=(f, axes[0]))
 plot(tag='pybullet_sample_mode_bball_random_hoop', env='BasketBallEnvRandomHoop-v0', bs=5000, betas='betas0.1_0.1', subtag=subtag, compile='median') #, fig_ax=(f, axes[0]))
@@ -132,10 +132,10 @@ sns.despine()
 #
 # # Legends: https://stackoverflow.com/questions/4700614/how-to-put-the-legend-out-of-the-plot/27355247#27355247
 # # plt.legend()
-# plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), #(0.45, 1.2),
-#           ncol=2, fancybox=False, shadow=False)
-# plt.legend(loc='upper center', bbox_to_anchor=(1, 0.5))
-plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), #(0.45, 1.2),
+          ncol=1, fancybox=False, shadow=False)
+# plt.legend(loc='lower left', bbox_to_anchor=(1, 0.5))
+# plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 plt.savefig("results/"+str(tag)+"/plots/"+ subtag +"/full.pdf", bbox_inches='tight')
 
