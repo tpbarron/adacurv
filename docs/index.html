@@ -71,6 +71,46 @@
     <dt-code language="python">plot_quick_start.py</dt-code> in the same directory script.
   <p>
 
+  <h3>Supervised Learning on MNIST</h3>
+  <p>To run the MNIST example execute the following commands:</p>
+  <p><dt-code block language="bash">
+    cd adacurv/experiments/mnist/
+    python quick_start.py
+  </dt-code></p>
+  <p>This will run AdaCurv-Adam*, NGD, and Adam optimizers for 5 epochs on MNIST and save data
+    to <dt-code language="bash">results/mlp_mnist/quick_start</dt-code>.
+    Once this has finished, running the provided plotting script
+    <dt-code language="bash">python plot_quick_start.py</dt-code> will save a plot of the results to
+    <dt-code languate="bash">results/mlp_mnist/quick_start/plots/</dt-code>. <br />
+
+    <img src='imgs/mnist/full.png' height='300px' />
+  </p>
+
+  <h3>Reinforcement Learning with PyBullet</h3>
+  <p>Similar to MNIST, there is also a 'quick start' for the RL experiments.</p>
+  <p><dt-code block language="bash">
+    cd adacurv/experiments/mjrl/
+    python quick_start.py
+  </dt-code></p>
+
+  <p>NOTE: If running the quick start script fails ensure that the proper python paths are set and
+    dependencies are installed as specified above in Getting Started.</p>
+
+  <p><img src='imgs/rl/hopper.png' height='150px' style='float: right; padding-left: 10px;'/></p>
+
+  <p>This quick start script will run AdaCurv*-TRPO with shrinkage and vanilla TRPO on the Hopper RL
+    environment in the PyBullet simulator. The training will run for 1 million steps.
+
+    As before, <dt-code language="bash">python plot_quick_start.py</dt-code> will save a plot of the results to
+    <dt-code languate="bash">results/quick_start/plots/</dt-code>. <br />
+
+    <img src='imgs/rl/full.png' height='300px' />
+  </p>
+
+
+  <h3>Matrix Completion for Modeling Natural Disaster Trends</h3>
+  <p>Test</p>
+
   <hr>
   <h2>Project Structure</h2>
 
@@ -85,7 +125,6 @@
         torch/  - PyTorch implementation of AdaCurv
           optim/  - optimizer implementations
           utils/  - utilities for CG, Lanzcos, linesearch
-        tf/     - Tensorflow implementation in progress
   </dt-code>
 
   <hr>
