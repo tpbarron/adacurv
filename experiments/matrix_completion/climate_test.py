@@ -72,8 +72,8 @@ def run(rcp='rcp45', iters=500, batch=2500, use_gn=True, seed=0):
     # B is (n x r)
     # So A @ B.T is (m x n)
 
-    M = np.load("data/climate_data/matrices/M_1900_2101_"+rcp+".npy")
-    W = np.load("data/climate_data/matrices/W_1900_2101_"+rcp+".npy")
+    M = np.load("climate_data/matrices/M_1900_2101_"+rcp+".npy")
+    W = np.load("climate_data/matrices/W_1900_2101_"+rcp+".npy")
 
     bs = batch
     n_samples = np.count_nonzero(W)
@@ -109,6 +109,7 @@ def run(rcp='rcp45', iters=500, batch=2500, use_gn=True, seed=0):
 
     P = fac(ids=Wind)
     print ("P init: ", P.shape)
+
     init_error = mat_completion_loss(W, M, P, fac.A, fac.B, Wind)
     print ("Init error: ", init_error / P.shape[0])
 
