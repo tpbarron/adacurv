@@ -47,10 +47,16 @@ def apply_denormalization(P, norm_offset, norm_scale):
 
 dimension_map = {
     'historical': [0],
-    'rcp_tas': [1, 2, 3, 4, 5, 6],
-    'rcp_tos': [7, 8, 9, 10, 11, 12],
-    'noaa_billion_cost': [13],
-    'noaa_billion_deaths': [14]
+    'rcp_tas': list(range(1, 17)), # [1, 2, 3, 4, 5, 6],
+    'rcp_tos': list(range(17, 35)), #[7, 8, 9, 10, 11, 12],
+    'noaa_billion_cost': [35], #13],
+    'noaa_billion_deaths': [36],
+    'noaa_billion_cost_yearly_totals': [37],
+    'noaa_billion_deaths_yearly_totals': [38],
+    'noaa_billion_cost_5year_avg': [39],
+    'noaa_billion_deaths_5year_avg': [40],
+    'noaa_billion_cost_monthly_interp': [41],
+    'noaa_billion_deaths_monthly_interp': [42]
 }
 
 def plot_dimension(P, M, W, key):
@@ -96,7 +102,7 @@ def plot_pred_cost(P, M, W, rcp, r, gn):
     fig = plt.figure(figsize=(4, 3))
 
     # i = 39 #13
-    i = dimension_map['noaa_billion_cost'][0]
+    i = dimension_map['noaa_billion_cost_yearly_totals'][0]
     # i = dimension_map['noaa_billion_cost_monthly_interp'][0]
     # print (M.shape)
     true_idx = np.nonzero(W[i])
@@ -141,7 +147,7 @@ def plot_pred_deaths(P, M, W, rcp, r, gn):
     fig = plt.figure(figsize=(4, 3))
 
     # i = 36
-    i = dimension_map['noaa_billion_deaths'][0]
+    i = dimension_map['noaa_billion_deaths_monthly_interp'][0]
 
     true_idx = np.nonzero(W[i])
     x = np.arange(1900, 2019.01, 1.0/12)[true_idx]
@@ -196,7 +202,7 @@ if __name__ == "__main__":
     rcp = 'rcp45'
     r = 5
     gn = 'gn'
-    P = np.load('models/P_'+rcp+'_rank'+str(r)+'_'+gn+'.npy')
+    P = np.load('models/testlarge_P_'+rcp+'_rank'+str(r)+'_'+gn+'.npy')
     M = np.load('data/climate_data/matrices/M_1900_2101_'+rcp+'.npy')
     W = np.load('data/climate_data/matrices/W_1900_2101_'+rcp+'.npy')
 
@@ -206,6 +212,7 @@ if __name__ == "__main__":
     P_denorm = apply_denormalization(P, norm_offset, norm_scale)
     M_denorm = apply_denormalization(M, norm_offset, norm_scale)
 
+    # plot_rcp(P_denorm, M_denorm, W, rcp, r, gn)
     plot_pred_anomaly(P_denorm, M_denorm, W, rcp, r, gn)
     plot_pred_cost(P_denorm, M_denorm, W, rcp, r, gn)
     plot_pred_deaths(P_denorm, M_denorm, W, rcp, r, gn)
@@ -213,7 +220,8 @@ if __name__ == "__main__":
     rcp = 'rcp85'
     r = 5
     gn = 'gn'
-    P = np.load('models/P_'+rcp+'_rank'+str(r)+'_'+gn+'.npy')
+    P = np.load('models/testlarge_P_'+rcp+'_rank'+str(r)+'_'+gn+'.npy')
+    print (P.shape)
     M = np.load('data/climate_data/matrices/M_1900_2101_'+rcp+'.npy')
     W = np.load('data/climate_data/matrices/W_1900_2101_'+rcp+'.npy')
 
@@ -227,6 +235,9 @@ if __name__ == "__main__":
     plot_pred_cost(P_denorm, M_denorm, W, rcp, r, gn)
     plot_pred_deaths(P_denorm, M_denorm, W, rcp, r, gn)
 
+    # for k in dimension_map.keys():
+    #     plot_dimension(P_denorm, M_denorm, W, k)
+    # plot_dimension(P_denorm, M_denorm, W, '') #k)
 
 
     fig = plt.figure(figsize=(4, 3))
