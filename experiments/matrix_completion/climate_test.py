@@ -26,7 +26,7 @@ class Factorization(nn.Module):
             P = self.A @ self.B.t()
         return P
 
-def mat_completion_loss(W, M, P, A, B, ids, lmda1=0.001, lmda2=0.001):
+def mat_completion_loss(W, M, P, A, B, ids, lmda1=0.0001, lmda2=0.0001):
     # e = torch.norm(W[ids] * (M[ids] - P[ids]), 'fro') #** 2.0
     # print ("W: ", W.shape, W[ids].shape, P.shape)
     e = torch.norm(W[ids] * (M[ids] - P), 'fro') ** 2.0
@@ -63,7 +63,7 @@ def randomize_windices(W):
     return Windx, Windy
 
 
-def run(rcp='rcp45', iters=500, batch=2500, use_gn=True, seed=0):
+def run(rcp='rcp45', iters=500, batch=5000, use_gn=True, seed=0):
     np.random.seed(seed)
     torch.manual_seed(seed)
 
