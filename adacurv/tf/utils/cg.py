@@ -15,11 +15,11 @@ def initialize_cg_vars(model_vars):
 
         for w in model_vars:
             zeros = tf.zeros(w.get_shape(), dtype=dtype)
-            delta = tf.Variable(zeros, dtype=dtype, name='delta')
+            delta = tf.Variable(zeros, dtype=dtype, name='delta', trainable=False)
             cg_delta.append(delta)
-            d = tf.Variable(zeros, dtype=dtype, name='direction')
+            d = tf.Variable(zeros, dtype=dtype, name='direction', trainable=False)
             directions.append(d)
-            r = tf.Variable(zeros, dtype=dtype, name='residual')
+            r = tf.Variable(zeros, dtype=dtype, name='residual', trainable=False)
             residuals.append(r)
 
     return cg_step, cg_delta, directions, residuals, residual_norm
