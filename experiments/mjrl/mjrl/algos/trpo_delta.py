@@ -21,7 +21,7 @@ from mjrl.utils.cg_solve import cg_solve
 
 # Import NPG
 from mjrl.algos.npg_cg_delta import NPG
-from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
+from adacurv.torch.utils.convert_gradients import gradients_to_vector, vector_to_gradients
 
 class TRPO(NPG):
     def __init__(self, env, policy, baseline, optim,
