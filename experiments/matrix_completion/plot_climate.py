@@ -197,11 +197,11 @@ if __name__ == "__main__":
     r = 5
     gn = 'gn'
     P = np.load('models/P_'+rcp+'_rank'+str(r)+'_'+gn+'.npy')
-    M = np.load('data/climate_data/matrices/M_1900_2101_'+rcp+'.npy')
-    W = np.load('data/climate_data/matrices/W_1900_2101_'+rcp+'.npy')
+    M = np.load('climate_data/matrices/M_1900_2101_'+rcp+'.npy')
+    W = np.load('climate_data/matrices/W_1900_2101_'+rcp+'.npy')
 
-    norm_offset = np.load('data/climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
-    norm_scale = np.load('data/climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
+    norm_offset = np.load('climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
+    norm_scale = np.load('climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
 
     P_denorm = apply_denormalization(P, norm_offset, norm_scale)
     M_denorm = apply_denormalization(M, norm_offset, norm_scale)
@@ -214,11 +214,11 @@ if __name__ == "__main__":
     r = 5
     gn = 'gn'
     P = np.load('models/P_'+rcp+'_rank'+str(r)+'_'+gn+'.npy')
-    M = np.load('data/climate_data/matrices/M_1900_2101_'+rcp+'.npy')
-    W = np.load('data/climate_data/matrices/W_1900_2101_'+rcp+'.npy')
+    M = np.load('climate_data/matrices/M_1900_2101_'+rcp+'.npy')
+    W = np.load('climate_data/matrices/W_1900_2101_'+rcp+'.npy')
 
-    norm_offset = np.load('data/climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
-    norm_scale = np.load('data/climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
+    norm_offset = np.load('climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
+    norm_scale = np.load('climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
 
     P_denorm = apply_denormalization(P, norm_offset, norm_scale)
     M_denorm = apply_denormalization(M, norm_offset, norm_scale)
@@ -234,9 +234,9 @@ if __name__ == "__main__":
     dims = dimension_map['rcp_tas']
     for rcp in ['rcp45', 'rcp85']:
 
-        M = np.load('data/climate_data/matrices/M_1900_2101_'+rcp+'.npy')
-        norm_offset = np.load('data/climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
-        norm_scale = np.load('data/climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
+        M = np.load('climate_data/matrices/M_1900_2101_'+rcp+'.npy')
+        norm_offset = np.load('climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
+        norm_scale = np.load('climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
 
         M_denorm = apply_denormalization(M, norm_offset, norm_scale)
 
@@ -268,9 +268,9 @@ if __name__ == "__main__":
     dims = dimension_map['rcp_tos']
     for rcp in ['rcp45', 'rcp85']:
 
-        M = np.load('data/climate_data/matrices/M_1900_2101_'+rcp+'.npy')
-        norm_offset = np.load('data/climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
-        norm_scale = np.load('data/climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
+        M = np.load('climate_data/matrices/M_1900_2101_'+rcp+'.npy')
+        norm_offset = np.load('climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
+        norm_scale = np.load('climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
 
         M_denorm = apply_denormalization(M, norm_offset, norm_scale)
 
@@ -302,9 +302,9 @@ if __name__ == "__main__":
     dims = dimension_map['historical']
     for rcp in ['rcp45']:
 
-        M = np.load('data/climate_data/matrices/M_1900_2101_'+rcp+'.npy')
-        norm_offset = np.load('data/climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
-        norm_scale = np.load('data/climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
+        M = np.load('climate_data/matrices/M_1900_2101_'+rcp+'.npy')
+        norm_offset = np.load('climate_data/matrices/norm_offset_1900_2101_'+rcp+'.npy')
+        norm_scale = np.load('climate_data/matrices/norm_scale_1900_2101_'+rcp+'.npy')
 
         M_denorm = apply_denormalization(M, norm_offset, norm_scale)
 
