@@ -112,6 +112,6 @@ def plot(tag='mlp', epochs=10, bs=250, subtag='batch', lr='0.001', file='data', 
 
 epochs = 5
 batch_size = 500
-tag='mlp_mnist/quick_start/'
+tag='mlp_mnist/sample_experiment/'
 subtag='adam_ngd_fang_comparison'
 plot(tag=tag, epochs=epochs, bs=batch_size, subtag=subtag, seeds=[0])

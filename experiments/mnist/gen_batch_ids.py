@@ -14,7 +14,7 @@ import numpy as np
 #import matplotlib.pyplot as plt
 
 from torch.optim.lr_scheduler import LambdaLR
-from fisher.optim.hvp_utils import build_Fvp, mean_kl_multinomial
+# from adacurv.torch.optim.hvp_utils import build_Fvp, mean_kl_multinomial
 
 def log_stats(batch_idxs, args, model, device, test_loader, epoch, batch_idx):
     batch_idxs.append(epoch)
