@@ -21,7 +21,7 @@ import mjrl.utils.process_samples as process_samples
 from mjrl.utils.logger import DataLog
 from mjrl.utils.cg_solve import cg_solve
 from mjrl.algos.batch_reinforce import BatchREINFORCE
-from fisher.utils.convert_gradients import gradients_to_vector, vector_to_gradients
+from adacurv.torch.utils.convert_gradients import gradients_to_vector, vector_to_gradients
 
 
 class NPG(BatchREINFORCE):

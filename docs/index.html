@@ -109,7 +109,39 @@
 
 
   <h3>Matrix Completion for Modeling Natural Disaster Trends</h3>
-  <p>Test</p>
+  <p>We also provide a sample script for the matrix completion task. The sparse matrix (and its
+    associated mask) is available pre-computed. To run the sample, one simply needs to execute the
+    <dt-code language="bash">climate_quick_start.py</dt-code> file. This will launch matrix completion
+    tasks for modeling problems based on both <a href="https://en.wikipedia.org/wiki/Representative_Concentration_Pathway">
+    Representative Concentration Pathways</a> 4.5 and 8.5. The optimization for each task will run for
+    50 epochs (though a better fit can be achieved with a few hundred epochs). Upon completion the associated
+    plotting script (<dt-code language="bash">plot_climate.py</dt-code> can be used to view the results.
+    This script will generate the plots found in the paper.
+
+    <br />
+    Plots of the original data:
+    <br />
+    <img src='imgs/mat/hist_anom.png' height='150px' />
+    <img src='imgs/mat/rcp_tas.png' height='150px' />
+    <img src='imgs/mat/rcp_tos.png' height='150px' />
+    <br />
+    Plots of the estimated trends for both RCPs.
+    <br />
+    RCP 4.5:
+    <br />
+    <img src='imgs/mat/pred_anomaly_rcp45_rank5_gn.png' height='150px' />
+    <img src='imgs/mat/pred_cost_rcp45_rank5_gn.png' height='150px' />
+    <img src='imgs/mat/pred_deaths_rcp45_rank5_gn.png' height='150px' />
+    <br />
+    RCP 8.5:
+    <br />
+    <img src='imgs/mat/pred_anomaly_rcp85_rank5_gn.png' height='150px' />
+    <img src='imgs/mat/pred_cost_rcp85_rank5_gn.png' height='150px' />
+    <img src='imgs/mat/pred_deaths_rcp85_rank5_gn.png' height='150px' />
+
+
+  </p>
+
 
   <hr>
   <h2>Project Structure</h2>
@@ -117,9 +149,9 @@
   <dt-code block language="html">
     adacurv/
       experiments/
-        matrix_completion/
-        mjrl/
         mnist/
+        mjrl/
+        matrix_completion/
         ...
       adacurv/
         torch/  - PyTorch implementation of AdaCurv

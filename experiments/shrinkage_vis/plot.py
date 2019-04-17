@@ -28,8 +28,8 @@ fig = plt.figure(figsize=(3.25, 2.5))
 bs = np.load("data/bs.npy")
 print (bs)
 
-diffs_shrunk = np.load('data/diffs_shrunk_noise1_fix.npy')
-diffs_sample = np.load('data/diffs_sample_noise1_fix.npy')
+diffs_shrunk = np.load('data/diffs_shrunk_noise_orig_fix.npy')
+diffs_sample = np.load('data/diffs_sample_noise_orig_fix.npy')
 
 print (diffs_shrunk.shape)
 
@@ -44,19 +44,28 @@ for p in [100, 50, 25]: #, 250]:
     diffs_shrunk_p = np.mean(diffs_shrunk_p, axis=0)
     diffs_sample_p = np.mean(diffs_sample_p, axis=0)
 
-    plt.semilogy(bs, diffs_sample_p, label='Sample $p='+str(p)+'$', ls='dashed', linewidth=1.5, color=sample_colors[i])
-    plt.semilogy(bs, diffs_shrunk_p, label='Shrunk $p='+str(p)+'$', ls='solid', linewidth=1.5, color=shrunk_colors[i])
+    # plt.semilogy(bs, diffs_sample_p, label='Sample $p='+str(p)+'$', ls='dashed', linewidth=1.5, color=sample_colors[i])
+    # plt.semilogy(bs, diffs_shrunk_p, label='Shrunk $p='+str(p)+'$', ls='solid', linewidth=1.5, color=shrunk_colors[i])
+
+    plt.loglog(bs, diffs_sample_p, label='Sample $p='+str(p)+'$', ls='dashed', linewidth=1.5, color=sample_colors[i])
+    plt.loglog(bs, diffs_shrunk_p, label='Shrunk $p='+str(p)+'$', ls='solid', linewidth=1.5, color=shrunk_colors[i])
+
     # plt.semilogy(bs, diffs_sample, label='Sample ' + str(p))
     # plt.semilogy(bs, diffs_shrunk, label='Shrunk ' + str(p))
     i += 1
 
 plt.xlabel("Batch Size")
 plt.ylabel("Fisher Frobenius Error")
-plt.legend()
+# plt.legend()
 plt.tight_layout()
 sns.despine()
 
-plt.savefig("fisher_errors_fro.pdf", bbox_inches='tight')
+plt.legend(loc='lower left', bbox_to_anchor=(-0.3, 1.02), #(0.45, 1.2),
+          ncol=3, fancybox=False, shadow=False)
+# plt.legend(loc='center left', bbox_to_anchor=(1.04, 0.5), #(0.45, 1.2),
+#           ncol=1, fancybox=False, shadow=False)
+
+plt.savefig("fisher_errors_fro_orig.pdf", bbox_inches='tight')
 
 
 # sample_colors = ['xkcd:dark orange', 'xkcd:orange', 'xkcd:light orange']

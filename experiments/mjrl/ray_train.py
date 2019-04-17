@@ -11,7 +11,7 @@ from mjrl.algos.npg_cg import NPG
 from mjrl.algos.trpo import TRPO
 import mjrl.envs
 
-import fisher.optim as fisher_optim
+import adacurv.torch.optim as fisher_optim
 
 decay = False
 
@@ -75,6 +75,7 @@ def build_log_dir(tag, variant):
 
 def launch_job(tag, variant):
 
+    print (len(variant))
     seed, env, algo, optim, curv_type, lr, batch_size, cg_iters, cg_residual_tol, cg_prev_init_coef, \
         cg_precondition_empirical, cg_precondition_regu_coef, cg_precondition_exp,  \
         shrinkage_method, lanczos_amortization, lanczos_iters, approx_adaptive, betas, use_nn_policy, gn_vfn_opt, total_samples = variant

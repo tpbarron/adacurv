@@ -33,6 +33,10 @@ def cg_solve(Fvp_fn,
         that may be used to estimate eigenvalues of F.
         If True will return (x, T)
     """
+
+    cg_data = {}
+    cg_data[0] = {}
+
     if M is not None:
         # M must be a vector (diagon matrix) of dim equal to b
         assert len(M) == len(b)
@@ -42,8 +46,10 @@ def cg_solve(Fvp_fn,
         assert Dshrunk is not None
 
     x = torch.zeros_like(b) if x_0 is None else x_0
+    cg_data[0]['x'] = x.numpy()
     if x_0 is not None:
         hvp_x0 = compute_fvp(Fvp_fn, x, damping, shrunk, rho, Dshrunk)
+        cg_data[0]['hvp'] = hvp_x0.numpy()
 
     if extract_tridiag:
         diag_elems = []
@@ -52,18 +58,24 @@ def cg_solve(Fvp_fn,
         beta_prev = 0
 
     r = b.clone() if x_0 is None else b-hvp_x0.data
+
     if M is not None:
         p = 1.0 / M * r.clone()
     else:
         p = r.clone()
     rdotr = p.dot(r)
 
-    p_ = r.clone()
-    # rdotr_ = p_.dot(r)
+    cg_data[0]['residual'] = r.numpy()
+    cg_data[0]['direction'] = p.numpy()
+    cg_data[0]['residual_norm'] = rdotr.numpy()
 
     for i in range(cg_iters):
+        cg_data[i+1] = {}
+
         hvp_p = compute_fvp(Fvp_fn, p, damping, shrunk, rho, Dshrunk)
         z = hvp_p.data
+        cg_data[i+1]['hvp'] = z.numpy()
+
         v = rdotr / p.dot(z)
         # v_ = rdotr_ / p_.dot(z)
         x += v * p
@@ -97,11 +109,16 @@ def cg_solve(Fvp_fn,
         p = s + mu * p
         rdotr = newrdotr
 
+        cg_data[i+1]['x'] = x.numpy()
+        cg_data[i+1]['residual'] = r.numpy()
+        cg_data[i+1]['direction'] = p.numpy()
+        cg_data[i+1]['residual_norm'] = rdotr.numpy()
+
         if rdotr < cg_residual_tol:
             break
     if extract_tridiag:
         off_diag_elems = off_diag_elems[0:len(diag_elems)-1]
         # print ("CG diag: ", diag_elems)
         # print ("CG diag_adj: ", off_diag_elems)
-        return x, (np.array(diag_elems), np.array(off_diag_elems))
-    return x
+        return dict(x=x, diag=(np.array(diag_elems), np.array(off_diag_elems)), cg_log=cg_data)
+    return dict(x=x, cg_log=cg_data)

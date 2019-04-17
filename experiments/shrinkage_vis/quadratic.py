@@ -14,8 +14,8 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 
 # from fisher.optim.hvp_utils import build_Fvp, mean_kl_multinomial, eval_F, eval_H
-from fisher.optim.hvp_utils import eval_F, mean_kl_multinomial
-from fisher.utils import lanczos
+from adacurv.torch.optim.hvp_utils import eval_F, mean_kl_multinomial
+from adacurv.torch.utils import lanczos
 
 class Model(nn.Module):
 
@@ -125,7 +125,7 @@ def plot_contours(Xdata, ydata, model, loss_fn, traces=None):
 def fit(data, full_data, p=20):
     model = Model(p)
 
-    import fisher.optim as fisher_optim
+    import adacurv.torch.optim as fisher_optim
     opt = fisher_optim.NGD(model.parameters(), curv_type='fisher', lr=0.01)
 
 
@@ -160,7 +160,7 @@ def fit(data, full_data, p=20):
         H = eval_F(model, Xvar, yvar, mean_kl_multinomial, damping=0.0).numpy()
         w, v = np.linalg.eig(H)
         # print ("Eigs vs trace: ", w, np.sum(w), np.trace(H))
-        rho, D = lanczos.estimate_shrinkage_fix(w, dim, bs)
+        rho, D = lanczos.estimate_shrinkage(w, dim, bs)
         # print ("Hess: ", H)
         # print ("D, rho: ", D, rho)
         # print ("True D: ", np.trace(H) / 2)
@@ -210,5 +210,5 @@ if __name__ == "__main__":
                 diffs_shrunk[si,pi,bi] = diff_shrunk
                 diffs_sample[si,pi,bi] = diff_sample
 
-    np.save('diffs_shrunk_noise1_fix.npy', diffs_shrunk)
-    np.save('diffs_sample_noise1_fix.npy', diffs_sample)
+    np.save('diffs_shrunk_noise_orig_fix.npy', diffs_shrunk)
+    np.save('diffs_sample_noise_orig_fix.npy', diffs_sample)

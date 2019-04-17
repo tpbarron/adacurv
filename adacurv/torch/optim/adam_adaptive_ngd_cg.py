@@ -17,6 +17,7 @@ from adacurv.torch.utils.cg import cg_solve
 from adacurv.torch.utils.lanczos import lanczos_iteration, estimate_shrinkage
 from adacurv.torch.utils.linesearch import randomized_linesearch
 
+from adacurv.utils.logger import DictLogger
 
 class NaturalAdam(Optimizer):
 
@@ -78,8 +79,16 @@ class NaturalAdam(Optimizer):
         self._param_group = self.param_groups[0]
         self._params = self._param_group['params']
         self._params_old = []
+
+        np.random.seed(0)
         for i in range(len(self._params)):
-            self._params_old.append(self._params[i] + torch.randn(self._params[i].shape) * 0.0001)
+            self._params_old.append(self._params[i] + np.random.normal() * torch.ones(self._params[i].shape) * 0.0001)
+        # for i in range(len(self._params)):
+        #     self._params_old.append(self._params[i] + torch.randn(self._params[i].shape) * 0.0001)
+
+        self.log = DictLogger(log_dir='/tmp/adacurv/torch/adam_adaptive_ngd_cg/')
+        # Add hyperparameters to log
+        self.log.log_hyperparam_dict(defaults)
 
     def _numel(self):
         if self._numel_cache is None:
@@ -123,8 +132,24 @@ class NaturalAdam(Optimizer):
             Fvp_fn (callable): A closure that accepts a vector of length equal to the number of
                 model paramsters and returns the Fisher-vector product.
         """
+
+        # 0: {
+        #     params: ...,
+        #     gradient: ...,
+        #     cg: {
+        #         0: [res, direction, cg_delta],
+        #         1: [res, direction, cg_delta],
+        #         ...
+        #     },
+        #     loss: ...
+        # },
+        #
+
         state = self.state
         param_vec = parameters_to_vector(self._params)
+        self.log.log_kv('params_pre', [p.data.numpy() for p in self._params])
+        self.log.log_kv('params_old_pre', [p.data.numpy() for p in self._params_old])
+
         # State initialization
         if len(state) == 0:
             state['step'] = 0
@@ -146,10 +171,14 @@ class NaturalAdam(Optimizer):
 
         # Get flat grad
         g = gradients_to_vector(self._params)
+        self.log.log_kv('gradient', [p.grad.data.numpy() for p in self._params])
 
         # Update moving average mean
         m.mul_(beta1).add_(1 - beta1, g)
         g_hat = m / bias_correction1
+
+        self.log.log_kv('m', m.numpy())
+        self.log.log_kv('g_hat', g_hat.numpy())
 
         theta = parameters_to_vector(self._params)
         theta_old = parameters_to_vector(self._params_old)
@@ -207,6 +236,8 @@ class NaturalAdam(Optimizer):
             V.mul_(beta2).add_(1 - beta2, Mt)
             M = V / bias_correction2
 
+            self.log.log_kv('M', M.numpy())
+
         extract_tridiag = self._param_group['shrinkage_method'] == 'cg'
         cg_result = cg_solve(fvp_fn_div_beta2,
                       g_hat.data.clone(),
@@ -219,21 +250,32 @@ class NaturalAdam(Optimizer):
                       Dshrunk=state['diag_shrunk'],
                       extract_tridiag=extract_tridiag)
 
+        cg_log = cg_result['cg_log']
+        self.log.log_kv('cg', cg_log)
+
         if extract_tridiag:
             # print ("Computing CG shrinkage at step ", state['step'])
-            ng, (diag_elems, off_diag_elems) = cg_result
+            ng = cg_result['x']
+            (diag_elems, off_diag_elems) = cg_result['diag']
             w = eigvalsh_tridiagonal(diag_elems, off_diag_elems)
             rho, diag_shrunk = estimate_shrinkage(w, self._numel(), self._param_group['batch_size'])
             state['rho'] = rho
             state['diag_shrunk'] = diag_shrunk
         else:
-            ng = cg_result
+            ng = cg_result['x']
+
+        self.log.log_kv('natural_gradient', ng.numpy())
+        self.log.log_kv('natural_gradient_prior', self.state['ng_prior'].numpy())
 
         self.state['ng_prior'] = ng.data.clone()
+
 
         # Normalize NG
         lr = self._param_group['lr']
         alpha = torch.sqrt(torch.abs(lr / (torch.dot(g_hat, ng) + 1e-20)))
+
+        self.log.log_kv('lr', lr)
+        self.log.log_kv('alpha', alpha)
 
         # Unflatten grad
         vector_to_gradients(ng, self._params)
@@ -246,4 +288,9 @@ class NaturalAdam(Optimizer):
                 d_p = p.grad.data
                 p.data.add_(-alpha, d_p)
 
+        self.log.log_kv('params_post', [p.data.numpy() for p in self._params])
+        self.log.log_kv('params_old_post', [p.data.numpy() for p in self._params_old])
+
+        self.log.save_log()
+        self.log.next_iteration()
         return dict(alpha=alpha, delta=lr, natural_grad=ng)

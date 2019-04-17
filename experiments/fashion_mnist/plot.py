@@ -83,24 +83,25 @@ def plot(tag='mlp', bs=250, subtag='batch', lr='0.001', file='data'):
     plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
     fig = plt.figure(figsize=(4, 3))
+    xs = np.linspace(0, 10, 201)
 
-    plt.plot(natural_adam_approx, label="FANG-Adam-", ls='dashed', color='xkcd:light green')
+    plt.plot(xs, natural_adam_approx, label="FANG-Adam$\,\hat{}\,$", ls='dashed', color='xkcd:fuchsia')
     print ("Best natural_adam_approx: ", max(natural_adam_approx), min(natural_adam_approx))
 
-    plt.plot(ngd, label="NGD", ls='solid', color='xkcd:orange')
+    plt.plot(xs, ngd, label="NGD", ls='solid', color='#2F4F4F')
     print ("Best ngd: ", max(ngd), min(ngd))
 
-    plt.plot(adam, label="Adam", ls='solid', color='xkcd:green')
+    plt.plot(xs, adam, label="Adam", ls='solid', color='#696969')
     print ("Best Adam: ", max(adam), min(adam))
 
-    plt.plot(kfac, label='K-FAC', ls='solid', color='xkcd:sky blue')
+    plt.plot(xs, kfac, label='K-FAC', ls='solid', color='xkcd:sky blue')
     print ("Best kfac: ", max(kfac), min(kfac))
 
-    plt.axhline(87.53)
-    plt.axvline(x=20)
+    # plt.axhline(87.53)
+    # plt.axvline(x=20)
 
 
-    ylims=(80.0, 95.25)
+    ylims=(80.0, 92.0)
     # ylims=(0.0, 1.)
     plt.ylim(ylims)
     # xlims=(0.0, 100)
