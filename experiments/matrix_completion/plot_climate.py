@@ -126,7 +126,7 @@ def plot_pred_cost(P, M, W, rcp, r, gn):
     # plt.gca().set_yscale('log')
 
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-    # plt.ylim((0, 150000))
+    plt.ylim((0, 150000))
     plt.ylabel('Est. Cost (Millions)')
     plt.xlabel('Year')
 
