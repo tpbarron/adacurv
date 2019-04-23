@@ -107,6 +107,27 @@
     <img src='imgs/rl/full.png' height='300px' />
   </p>
 
+  <p>
+    The same RL framework was used to train a robot in simulation to throw a ball into a hoop.
+    The hoop position is randomized within a 30 degree angle of the robot's orientation.
+  </p>
+  <p><img src='imgs/rl/bball/bball.png' height='150px' style='float: right; padding-left: 10px;' /></p>
+
+  <p>
+    At each step the robot receives the environment state as input, which includes the joint angles and velocities of both arms, the position and velocity of the ball along with the angle to the hoop.
+    Given the input state the policy generates a control output specifying the joint velocities for each arm individually.
+    The robot also receives a reward at each time step, which we define to be the negative Euclidean norm between the current ball velocity vector and that which would land the ball in the hoop.
+    Intuitively, the robot is rewarded for moving the ball such that if it were to let go immediately, the ball would follow the proper trajectory into the hoop.
+    In our experimental analysis we find AdaCurv results in as much as 50 percent improvement in learning rate.
+    The images show a render of the simulation setup and the training curves.
+    <img src='imgs/rl/bball/basketball_full_new.png' height='300px' /> <br />
+
+    The following video shows the final learned policy. <br/>
+    <video height="350px" controls>
+      <source src="imgs/rl/bball/bball_sim.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </p>
 
   <h3>Matrix Completion for Modeling Natural Disaster Trends</h3>
   <p>We also provide a sample script for the matrix completion task. The sparse matrix (and its
@@ -138,8 +159,6 @@
     <img src='imgs/mat/pred_anomaly_rcp85_rank5_gn.png' height='150px' />
     <img src='imgs/mat/pred_cost_rcp85_rank5_gn.png' height='150px' />
     <img src='imgs/mat/pred_deaths_rcp85_rank5_gn.png' height='150px' />
-
-
   </p>
 
 
