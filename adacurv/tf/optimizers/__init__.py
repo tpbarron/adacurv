@@ -1,3 +1,0 @@
-from .ngd_cg import NGDOptimizer
-from .adam_adaptive_ngd_cg import NaturalAdamNGDOptimizer
-from .adagrad_adaptive_ngd_cg import NaturalAdagradNGDOptimizer
